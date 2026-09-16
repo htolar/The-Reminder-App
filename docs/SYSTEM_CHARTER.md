@@ -1,1 +1,0 @@
-I'm going to make a slider program where an everyday subject, starting with a human hand, can be explored from the outside in. A slider at the bottom slowly opens the hand to show its internal anatomy. I will know it works when sliding the bar reveals the hand's working parts clearly.
