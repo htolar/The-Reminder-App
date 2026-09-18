@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "The Reminder App",
+  "version": "1.0.0",
+  "description": "A warm, supportive reminder and focus app for completing tasks without pressure.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "The Reminder App",
+    "default_popup": "index.html"
+  }
+}

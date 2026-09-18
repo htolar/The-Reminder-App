@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Reminder App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">The Reminder App</p>
+          <h1>Stay with it.</h1>
+        </div>
+        <button id="focus-toggle" class="ghost-btn" type="button">Focus mode</button>
+      </header>
+
+      <section class="panel task-panel">
+        <h2>Add a task</h2>
+        <form id="task-form" class="task-form">
+          <label>
+            <span>Task name</span>
+            <input id="task-name" name="taskName" type="text" placeholder="Write a task" maxlength="60" required />
+          </label>
+
+          <label>
+            <span>Minutes</span>
+            <input id="task-duration" name="taskDuration" type="number" min="1" max="180" value="25" required />
+          </label>
+
+          <button type="submit" class="primary-btn large-btn">Add task</button>
+        </form>
+      </section>
+
+      <section id="grind-board" class="panel grind-board hidden" aria-live="polite">
+        <div class="grind-header-row">
+          <button id="back-to-home-btn" class="secondary-btn" type="button">Back</button>
+        </div>
+
+        <div class="grind-page">
+          <div class="grind-work-column">
+            <div class="grind-tasks-box">
+              <div class="grind-box-heading">
+                <span>Tasks</span>
+                <strong id="grind-task-name">Task</strong>
+              </div>
+              <div id="grind-checklist" class="grind-checklist" aria-live="polite"></div>
+
+              <div class="grind-footer">
+                <button id="grind-button" class="primary-btn" type="button">I’m done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grind-side-column">
+            <div class="grind-timer-box">
+              <span>Timer</span>
+              <strong id="grind-timer">25:00</strong>
+              <div class="grind-timer-actions" aria-label="Timer options">
+                <button id="grind-pause-btn" class="secondary-btn" type="button">Pause</button>
+                <button id="grind-reset-btn" class="secondary-btn" type="button">Reset</button>
+                <button id="grind-extend-btn" class="secondary-btn" type="button">+5 min</button>
+              </div>
+            </div>
+
+            <div class="grind-progress-panel">
+              <div class="grind-progress-label-row">
+                <span>Progress</span>
+                <strong id="grind-progress-label">0%</strong>
+              </div>
+              <div class="grind-progress-track">
+                <div id="grind-progress-fill" class="grind-progress-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="section-heading list-header">
+          <h2>Task list</h2>
+          <button id="start-grind-btn" class="primary-btn large-btn" type="button">GRIND</button>
+        </div>
+        <ul id="task-list" class="task-list" aria-live="polite"></ul>
+      </section>
+    </main>
+
+    <div id="subtask-menu" class="subtask-menu hidden" role="dialog" aria-label="Add mini task">
+      <div class="subtask-menu-header">
+        <span>Add mini task</span>
+        <button id="close-subtask-menu" class="tiny-btn" type="button" aria-label="Close">×</button>
+      </div>
+      <p id="subtask-parent-name" class="subtask-parent-name"></p>
+      <form id="subtask-form" class="subtask-form">
+        <input id="subtask-name" type="text" placeholder="Mini task" maxlength="60" required />
+        <input id="subtask-duration" type="number" min="1" max="180" value="5" aria-label="Mini task minutes" required />
+        <button class="primary-btn" type="submit">Add</button>
+      </form>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
