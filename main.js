@@ -1,5 +1,5 @@
-import { startRenderLoop } from './src/Canvas/loop.js';
-import { setupCanvas } from './src/Canvas/setupCanvas.js';
+import { startRenderLoop } from './V1/src/Canvas/loop.js';
+import { setupCanvas } from './V1/src/Canvas/setupCanvas.js';
 
 const STORAGE_KEY = 'reminder-app.tasks.v1';
 
@@ -21,6 +21,12 @@ const state = {
   grindTimerSeconds: 0,
   grindTimerId: null,
   grindCanAdvance: false,
+  // Tracks the progress bar's per-task segments across a grind session.
+  // Kept separate from state.tasks because completed tasks are removed
+  // from the list shortly after finishing, which would otherwise make
+  // the segment count shrink mid-session.
+  grindTotalTasks: 0,
+  grindCompletedCount: 0,
 };
 
 const elements = {
@@ -391,17 +397,33 @@ function renderGrindBoard() {
   }
 
   const activeTask = getCurrentGrindTask();
-  const totalTasks = state.tasks.length || 1;
-  const completedCount = state.tasks.filter((task) => task.completed).length;
-  const percent = Math.min(100, Math.round((completedCount / totalTasks) * 100));
+
+  // Use the counts captured when the grind session started, rather than
+  // state.tasks.length, so the progress bar's segment count stays stable
+  // even as finished tasks get removed from the underlying list.
+  const totalTasks = state.grindTotalTasks || state.tasks.length || 1;
+  const completedCount = state.grindCompletedCount;
+  const percent = totalTasks ? Math.min(100, Math.round((completedCount / totalTasks) * 100)) : 0;
 
   elements.grindBoard.classList.remove('hidden');
   elements.taskPanel.classList.add('hidden');
   elements.listPanel.classList.add('hidden');
   if (elements.grindButton) elements.grindButton.disabled = !activeTask;
   elements.grindTaskName.textContent = activeTask ? activeTask.title : 'Task';
-  elements.grindProgressLabel.textContent = `${percent}%`;
-  elements.grindProgressFill.style.width = `${percent}%`;
+  elements.grindProgressLabel.textContent = `${percent}% · ${completedCount}/${totalTasks}`;
+
+  // Render one segment per task so each task's state change (pending ->
+  // active -> done) is visible individually on the bar, and CSS animates
+  // the color/pulse transitions as segments change state.
+  elements.grindProgressFill.innerHTML = Array.from({ length: totalTasks }, (_, index) => {
+    let segmentState = 'pending';
+    if (index < completedCount) {
+      segmentState = 'done';
+    } else if (index === completedCount && state.grindMode) {
+      segmentState = 'active';
+    }
+    return `<div class="progress-segment ${segmentState}"></div>`;
+  }).join('');
 
   const minutes = Math.floor(state.grindTimerSeconds / 60);
   const seconds = state.grindTimerSeconds % 60;
@@ -639,6 +661,8 @@ function startGrind() {
   state.grindMode = true;
   state.grindIndex = 0;
   state.grindSliderValue = 0;
+  state.grindTotalTasks = unfinished.length;
+  state.grindCompletedCount = 0;
   state.selectedTaskId = unfinished[0].id;
   if (elements.startGrindBtn) elements.startGrindBtn.disabled = true;
   startGrindTimer();
@@ -657,6 +681,7 @@ function completeCurrentTask() {
   }
 
   activeTask.completed = true;
+  state.grindCompletedCount += 1;
   scheduleCompletedTaskRemoval(activeTask);
   stopGrindTimer();
 
@@ -675,6 +700,8 @@ function completeCurrentTask() {
     state.grindSliderValue = 0;
     state.grindCanAdvance = false;
     state.grindTimerSeconds = 0;
+    state.grindTotalTasks = 0;
+    state.grindCompletedCount = 0;
     stopGrindTimer();
     if (elements.startGrindBtn) elements.startGrindBtn.disabled = false;
     setEncouragement('All tasks complete. Beautiful work. Take a breath.');
@@ -692,6 +719,8 @@ function returnToHome() {
   state.grindSliderValue = 0;
   state.grindCanAdvance = false;
   state.grindTimerSeconds = 0;
+  state.grindTotalTasks = 0;
+  state.grindCompletedCount = 0;
   stopGrindTimer();
   if (elements.startGrindBtn) elements.startGrindBtn.disabled = false;
   removeCompletedTasks();

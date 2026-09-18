@@ -507,17 +507,50 @@ button:hover {
 .grind-progress-track {
   width: 100%;
   height: 16px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(122, 78, 38, 0.08);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--line);
+  padding: 2px;
 }
 
+/* Progress is now shown as a row of per-task segments instead of one
+   continuous fill, so each task's state change (pending -> active -> done)
+   is visible individually and animates as it happens. */
 .grind-progress-fill {
-  width: 0%;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
   height: 100%;
-  border-radius: inherit;
+}
+
+.progress-segment {
+  flex: 1;
+  min-width: 4px;
+  border-radius: 6px;
+  background: rgba(122, 78, 38, 0.12);
+  transition: background 0.45s ease, box-shadow 0.45s ease, transform 0.3s ease;
+}
+
+.progress-segment.done {
   background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+}
+
+.progress-segment.active {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+  animation: segment-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes segment-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(242, 110, 61, 0.35);
+    transform: scaleY(1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(242, 110, 61, 0.55);
+    transform: scaleY(1.12);
+  }
 }
 
 .grind-checklist {
