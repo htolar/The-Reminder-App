@@ -1,5 +1,5 @@
-import { startRenderLoop } from './V1/src/Canvas/loop.js';
-import { setupCanvas } from './V1/src/Canvas/setupCanvas.js';
+import { startRenderLoop } from './src/Canvas/loop.js';
+import { setupCanvas } from './src/Canvas/setupCanvas.js';
 
 const STORAGE_KEY = 'reminder-app.tasks.v1';
 
