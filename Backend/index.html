@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reminder App</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <h1>Reminder App</h1>
+
+      <section class="panel task-panel">
+        <h2>Add a task</h2>
+        <form id="task-form">
+          <label>
+            Task name
+            <input id="task-name" type="text" placeholder="Write a task" maxlength="60" required />
+          </label>
+          <label>
+            Minutes
+            <input id="task-duration" type="number" min="1" max="180" value="25" required />
+          </label>
+          <button type="submit" class="primary-btn">Add task</button>
+        </form>
+      </section>
+
+      <section id="grind-board" class="panel hidden">
+        <button id="back-to-home-btn" type="button">Back</button>
+
+        <div class="grind-heading">
+          <span>Current task</span>
+          <strong id="grind-task-name">Task</strong>
+        </div>
+
+        <div id="grind-checklist" class="grind-checklist"></div>
+
+        <div class="grind-timer">
+          <strong id="grind-timer">25:00</strong>
+          <div class="grind-timer-actions">
+            <button id="grind-pause-btn" type="button">Pause</button>
+            <button id="grind-reset-btn" type="button">Reset</button>
+            <button id="grind-extend-btn" type="button">+5 min</button>
+          </div>
+        </div>
+
+        <div class="progress-panel">
+          <div class="progress-label-row">
+            <span>Progress</span>
+            <strong id="grind-progress-label">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div id="grind-progress-fill"></div>
+          </div>
+        </div>
+
+        <button id="grind-button" type="button" class="primary-btn">I'm done</button>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="list-header">
+          <h2>Task list</h2>
+          <button id="start-grind-btn" type="button" class="primary-btn">GRIND</button>
+        </div>
+        <ul id="task-list"></ul>
+      </section>
+    </main>
+
+    <div id="subtask-menu" class="subtask-menu hidden">
+      <div class="subtask-menu-header">
+        <span>Add mini task</span>
+        <button id="close-subtask-menu" type="button">×</button>
+      </div>
+      <p id="subtask-parent-name"></p>
+      <form id="subtask-form">
+        <input id="subtask-name" type="text" placeholder="Mini task" maxlength="60" required />
+        <input id="subtask-duration" type="number" min="1" max="180" value="5" required />
+        <button type="submit" class="primary-btn">Add</button>
+      </form>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

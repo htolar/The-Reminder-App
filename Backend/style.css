@@ -1,0 +1,295 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: system-ui, sans-serif;
+  color: #111;
+  background: #fff;
+}
+
+.app-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+input {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Task list */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  transition: opacity 0.15s ease;
+}
+
+.task-item.selected {
+  border-color: #000;
+}
+
+.task-item.removing {
+  opacity: 0;
+}
+
+.task-select {
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  flex: 1;
+  cursor: pointer;
+}
+
+.task-duration {
+  color: #666;
+  font-size: 0.85rem;
+  margin-right: 8px;
+}
+
+.empty-state {
+  color: #666;
+}
+
+.subtask-list {
+  list-style: none;
+  margin: 8px 0 0 12px;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #444;
+  display: grid;
+  gap: 4px;
+}
+
+.subtask-details summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+
+/* Subtask popup */
+.subtask-menu {
+  position: fixed;
+  width: 240px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+}
+
+.subtask-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+#subtask-parent-name {
+  margin: 0 0 8px;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+#subtask-form {
+  display: grid;
+  gap: 8px;
+}
+
+/* Grind board */
+.grind-heading {
+  display: grid;
+  gap: 2px;
+  margin: 12px 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.grind-heading strong {
+  color: #111;
+  font-size: 1.2rem;
+}
+
+.grind-checklist {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.grind-task-group {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.grind-task-group.active {
+  border-color: #000;
+}
+
+.grind-task-group.done {
+  opacity: 0.6;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.check-item.done span {
+  text-decoration: line-through;
+}
+
+.grind-subtask-list {
+  list-style: none;
+  margin: 8px 0 0 24px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.grind-subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grind-timer {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.grind-timer strong {
+  display: block;
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+}
+
+.grind-timer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Progress bar — the main focus: segmented, one piece per task/subtask,
+   each one visibly changing state as you go. */
+.progress-panel {
+  margin-bottom: 16px;
+}
+
+.progress-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.progress-track {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 2px;
+  height: 18px;
+  display: flex;
+  gap: 3px;
+}
+
+#grind-progress-fill {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+}
+
+.progress-segment {
+  flex: 1;
+  min-width: 4px;
+  background: #eee;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+}
+
+.progress-segment.done {
+  background: #000;
+}
+
+.progress-segment.active {
+  background: #555;
+  animation: segment-blink 1s ease-in-out infinite;
+}
+
+@keyframes segment-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
