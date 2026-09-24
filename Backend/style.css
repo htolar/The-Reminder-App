@@ -334,13 +334,26 @@ button:disabled {
 .check-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .grind-item-title {
   flex: 1;
+  min-width: 0;
   color: #fff4e4 !important;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grind-item-minutes {
+  flex-shrink: 0;
+  color: #aeb8c7;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2em;
+  text-align: right;
 }
 
 .check-item.done .grind-item-title {
@@ -359,7 +372,7 @@ button:disabled {
 .grind-subtask-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .grind-timer {
