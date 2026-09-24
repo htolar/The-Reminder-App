@@ -208,7 +208,11 @@ function cacheElements() {
   ];
 
   for (const id of ids) {
-    elements[id] = document.getElementById(id);
+    const camelKey = id.replace(/-([a-z])/g, (_, letter) =>
+      letter.toUpperCase()
+    );
+
+    elements[camelKey] = document.getElementById(id);
   }
 
   elements.taskPanel =
