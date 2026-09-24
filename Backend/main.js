@@ -7,6 +7,7 @@ const state = {
   selectedTaskId: null,
   grindMode: false,
   grindTaskIds: [],
+  grindTotalUnits: 0,
   grindCurrentId: null,
   grindTimerSeconds: 0,
   grindTimerId: null,
@@ -548,35 +549,31 @@ function countCompletedUnits(task) {
 }
 
 function calculateProgress() {
-  const tasks =
-    getSessionTasks();
-
   const total =
-    tasks.reduce(
+    state.grindTotalUnits;
+
+  if (!total) {
+    return 0;
+  }
+
+  const remaining =
+    getSessionTasks().reduce(
       (sum, task) =>
         sum + countUnits(task),
       0
     );
 
   const completed =
-    tasks.reduce(
-      (sum, task) =>
-        sum +
-        countCompletedUnits(
-          task
-        ),
-      0
-    );
+    total - remaining;
 
-  if (!total) {
-    return 0;
-  }
-
-  return Math.min(
-    100,
-    Math.round(
-      (completed / total) *
-        100
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        (completed / total) *
+          100
+      )
     )
   );
 }
@@ -855,22 +852,13 @@ function renderGrindChecklist(
     checkbox.addEventListener(
       'change',
       async () => {
-        task.completed =
-          checkbox.checked;
-
         if (
-          task.id ===
-            state.grindCurrentId &&
-          task.completed
+          checkbox.checked
         ) {
-          stopTimer();
-          state.grindTimerSeconds =
-            0;
-          advanceToNextTask();
+          await deleteTask(
+            task.id
+          );
         }
-
-        await saveState();
-        renderAll();
       }
     );
 
@@ -937,8 +925,28 @@ function renderGrindChecklist(
           subCheck.addEventListener(
             'change',
             async () => {
-              subtask.completed =
-                subCheck.checked;
+              if (
+                !subCheck.checked
+              ) {
+                return;
+              }
+
+              const subIndex =
+                task.subtasks.findIndex(
+                  s =>
+                    s.id ===
+                    subtask.id
+                );
+
+              if (
+                subIndex !==
+                -1
+              ) {
+                task.subtasks.splice(
+                  subIndex,
+                  1
+                );
+              }
 
               await saveState();
 
@@ -1621,14 +1629,9 @@ async function markCurrentDone() {
     return;
   }
 
-  task.completed =
-    true;
-
-  advanceToNextTask();
-
-  await saveState();
-
-  renderAll();
+  await deleteTask(
+    task.id
+  );
 }
 
 /* =========================================================
@@ -1668,6 +1671,13 @@ async function startGrind() {
   state.grindTaskIds =
     state.tasks.map(
       task => task.id
+    );
+
+  state.grindTotalUnits =
+    state.tasks.reduce(
+      (sum, task) =>
+        sum + countUnits(task),
+      0
     );
 
   let first =
