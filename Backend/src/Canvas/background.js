@@ -25,16 +25,55 @@ chrome.action.onClicked.addListener(async () => {
   await chrome.storage.local.set({ appWindowId: win.id });
 });
 
+// ---- GRIND is only "running" while the app is really open ----
+// Blocking and check-ins must never happen when the app isn't open. The app tells
+// us when GRIND starts/stops (grindActive), but a crash, a closed window, or an
+// extension reload could leave that flag stuck on — so every time we're about to
+// act on it we also confirm the app's page is still open somewhere.
+async function appIsOpen() {
+  const base = APP_URL();
+  const tabs = await chrome.tabs.query({});
+  return tabs.some((t) => (t.url || t.pendingUrl || '').startsWith(base));
+}
+
+async function endGrind() {
+  const { checkin } = await chrome.storage.local.get('checkin');
+  await chrome.storage.local.set({ grindActive: false, blockedMinutes: 0 });
+  if (checkin && checkin.windowId != null) {
+    chrome.windows.remove(checkin.windowId).catch(() => {});
+  }
+}
+
+async function grindRunning() {
+  const { grindActive } = await chrome.storage.local.get('grindActive');
+  if (!grindActive) return false;
+  if (await appIsOpen()) return true;
+  await endGrind(); // flag was stale: the app is closed, so nothing should be blocked
+  return false;
+}
+
+// App window closed -> GRIND is over.
 chrome.windows.onRemoved.addListener(async (windowId) => {
   const { appWindowId } = await chrome.storage.local.get('appWindowId');
-  if (appWindowId === windowId) await chrome.storage.local.remove('appWindowId');
+  if (appWindowId === windowId) {
+    await chrome.storage.local.remove('appWindowId');
+    await endGrind();
+  }
 });
 
-// ---- Sites set to "block": closed the instant they're opened or navigated to ----
+// Any tab closing (e.g. the app opened in a normal tab): re-check that the app is still open.
+chrome.tabs.onRemoved.addListener(async () => {
+  const { grindActive } = await chrome.storage.local.get('grindActive');
+  if (grindActive) await grindRunning();
+});
+
+// ---- Sites set to "Block": closed the instant they're opened or navigated to ----
+// Only while a GRIND session is running — see setGrindActive() in src/focus.js.
 async function enforce(tab) {
   if (!tab || !tab.id) return;
   const url = tab.url || tab.pendingUrl;
   if (!url) return;
+  if (!(await grindRunning())) return;
   const { sites } = await getSettings();
   const match = matchSite(url, sites);
   if (match && match.mode === 'block') chrome.tabs.remove(tab.id).catch(() => {});
@@ -44,17 +83,21 @@ chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
   if (change.url || change.status === 'loading') enforce(tab);
 });
 
-chrome.runtime.onStartup.addListener(() =>
-  chrome.storage.local.set({ blockedMinutes: 0, checkin: null })
-);
+// Browser start or extension reload/update: no session can be running yet.
+const resetSession = () =>
+  chrome.storage.local.set({ grindActive: false, blockedMinutes: 0, checkin: null });
+chrome.runtime.onStartup.addListener(resetSession);
+chrome.runtime.onInstalled.addListener(resetSession);
 
-// ---- Sites set to "checkin": after N minutes, ask "are you being productive?" ----
-// Once a minute, if you are actively using Chrome and the tab you are looking
-// at is a "checkin" site, that minute is counted. At the limit, a small window
-// asks whether you are being productive; "No" closes the site.
+// ---- Sites set to "Check-in": after N minutes, ask "are you being productive?" ----
+// Also only while a GRIND session is running. Once a minute, if you are actively
+// using Chrome and the tab you are looking at is a "Check-in" site, that minute
+// is counted. At the limit, a small window asks whether you are being productive;
+// "No" closes the site.
 async function tick() {
   const { checkin } = await chrome.storage.local.get('checkin');
   if (checkin) return; // a prompt is already open
+  if (!(await grindRunning())) return; // nothing to track outside GRIND
 
   if ((await chrome.idle.queryState(300)) !== 'active') return; // away from the computer
   const win = await chrome.windows.getLastFocused();

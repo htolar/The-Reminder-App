@@ -54,6 +54,7 @@ const elements = {
   subtaskDuration: document.querySelector('#subtask-duration'),
   subtaskParentName: document.querySelector('#subtask-parent-name'),
   closeSubtaskMenu: document.querySelector('#close-subtask-menu'),
+  appShell: document.querySelector('.app-shell'),
   settingsBtn: document.querySelector('#settings-btn'),
   settingsPanel: document.querySelector('#settings-panel'),
   sitesList: document.querySelector('#sites-list'),
@@ -478,10 +479,13 @@ function startGrind() {
   const unfinished = getUnfinishedTasks();
   if (!unfinished.length) return;
 
-  // Chrome extension only (no-op elsewhere): clear out any already-open "block" sites.
-  // "Block" and "checkin" sites are enforced all the time, not just during GRIND —
-  // this just gives a clean start when you begin a focus session.
-  extReady.then((ext) => ext && ext.focus.closeDistractions());
+  // Chrome extension only (no-op elsewhere): turn on site blocking for this
+  // session, and clear out any already-open "Block" sites right away.
+  extReady.then((ext) => {
+    if (!ext) return;
+    ext.focus.setGrindActive(true);
+    ext.focus.closeDistractions();
+  });
 
   state.grindMode = true;
   state.grindTaskIds = unfinished.map((t) => t.id);
@@ -520,6 +524,7 @@ function endGrindSession() {
   state.grindTotalUnits = 0;
   state.grindTimerSeconds = 0;
   stopGrindTimer();
+  extReady.then((ext) => ext && ext.focus.setGrindActive(false));
   elements.startGrindBtn.disabled = false;
 }
 
@@ -544,29 +549,31 @@ function renderSitesList() {
     .map(
       (site, index) => `
         <li class="site-row" data-index="${index}">
-          <label class="check-item">
-            <input type="checkbox" data-site-checkbox="${index}" ${site.mode === 'block' ? 'checked' : ''} />
-            <span class="grind-item-title">${escapeHtml(site.host)}</span>
-          </label>
-          <span class="site-mode-hint">${site.mode === 'block' ? 'Closed instantly' : 'Checked in on'}</span>
+          <span class="site-host">${escapeHtml(site.host)}</span>
+          <div class="site-toggle" role="group">
+            <button type="button" class="site-toggle-btn ${site.mode === 'block' ? 'active' : ''}" data-index="${index}" data-set-mode="block">Block</button>
+            <button type="button" class="site-toggle-btn ${site.mode === 'checkin' ? 'active' : ''}" data-index="${index}" data-set-mode="checkin">Check-in</button>
+          </div>
           <button type="button" class="site-delete-btn ${editorMode ? '' : 'hidden'}" data-site-delete="${index}" title="Remove site">×</button>
         </li>
       `
     )
     .join('');
 
-  elements.sitesList.querySelectorAll('[data-site-checkbox]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const site = editingSites[Number(input.dataset.siteCheckbox)];
+  elements.sitesList.querySelectorAll('[data-set-mode]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const site = editingSites[Number(button.dataset.index)];
       if (!site) return;
-      site.mode = input.checked ? 'block' : 'checkin';
-      renderSitesList(); // refresh the "Closed instantly" / "Checked in on" hint text
+      site.mode = button.dataset.setMode;
+      markSettingsDirty();
+      renderSitesList(); // refresh which button looks "active"
     });
   });
 
   elements.sitesList.querySelectorAll('[data-site-delete]').forEach((button) => {
     button.addEventListener('click', () => {
       editingSites.splice(Number(button.dataset.siteDelete), 1);
+      markSettingsDirty();
       renderSitesList();
     });
   });
@@ -574,32 +581,49 @@ function renderSitesList() {
 
 function setEditorMode(on) {
   editorMode = on;
-  elements.editorModeBtn.textContent = editorMode ? 'Done editing' : 'Editor mode';
+  elements.editorModeBtn.textContent = editorMode ? 'Done editing' : 'Edit list';
   elements.editorModeBtn.classList.toggle('primary-btn', editorMode);
   elements.addSiteForm.classList.toggle('hidden', !editorMode);
   renderSitesList();
 }
 
+function markSettingsDirty() {
+  elements.settingsStatus.textContent = 'Unsaved changes';
+}
+
+function showSettingsMessage(text) {
+  elements.sitesList.innerHTML = `<li class="empty-state">${escapeHtml(text)}</li>`;
+}
+
 async function fillSettingsForm() {
-  const ext = await extReady;
-  if (!ext) {
-    elements.settingsStatus.textContent = 'Settings are unavailable (extension files failed to load).';
-    return;
+  showSettingsMessage('Loading…');
+  try {
+    const ext = await extReady;
+    if (!ext) {
+      elements.settingsStatus.textContent = '';
+      showSettingsMessage('Site blocking only works when this is loaded as a Chrome extension. Load this folder via chrome://extensions → Load unpacked, then open the app from the toolbar icon.');
+      return;
+    }
+    const { sites, checkInMinutes } = await ext.settings.getSettings();
+    editingSites = sites.map((site) => ({ ...site }));
+    elements.checkinMinutes.value = checkInMinutes;
+    setEditorMode(false);
+  } catch (error) {
+    // Always show something, even if loading fails, so the panel is never blank.
+    showSettingsMessage(`Couldn't load your sites: ${error && error.message ? error.message : error}`);
   }
-  const { sites, checkInMinutes } = await ext.settings.getSettings();
-  editingSites = sites.map((site) => ({ ...site }));
-  elements.checkinMinutes.value = checkInMinutes;
-  setEditorMode(false);
 }
 
 async function openSettings() {
   elements.settingsStatus.textContent = '';
   elements.settingsPanel.classList.remove('hidden');
+  elements.appShell.classList.add('settings-open');
   await fillSettingsForm();
 }
 
 function closeSettings() {
   elements.settingsPanel.classList.add('hidden');
+  elements.appShell.classList.remove('settings-open');
   setEditorMode(false);
 }
 
@@ -616,6 +640,7 @@ function handleAddSiteSubmit(event) {
   }
   elements.addSiteForm.reset();
   elements.addSiteBlock.checked = true;
+  markSettingsDirty();
   renderSitesList();
   elements.addSiteHost.focus();
 }
@@ -624,8 +649,12 @@ async function saveSettingsFromForm() {
   const ext = await extReady;
   if (!ext) return;
   const checkInMinutes = Math.max(1, Math.round(Number(elements.checkinMinutes.value) || 60));
-  await ext.settings.saveSettings({ sites: editingSites, checkInMinutes });
-  elements.settingsStatus.textContent = 'Saved';
+  try {
+    await ext.settings.saveSettings({ sites: editingSites, checkInMinutes });
+    elements.settingsStatus.textContent = 'Saved';
+  } catch (error) {
+    elements.settingsStatus.textContent = 'Could not save';
+  }
 }
 
 async function resetSettingsToDefaults() {
@@ -716,6 +745,11 @@ function bindEvents() {
 }
 
 function initialize() {
+  extReady.then((ext) => ext && ext.focus.setGrindActive(false)); // a freshly loaded page never has a session running
+  // Closing the app window ends the session right away (background.js also double-checks).
+  window.addEventListener('pagehide', () => {
+    extReady.then((ext) => ext && ext.focus.setGrindActive(false));
+  });
   syncSelection();
   bindEvents();
   initCanvasBackground();

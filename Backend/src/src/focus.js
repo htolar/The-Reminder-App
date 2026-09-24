@@ -18,6 +18,15 @@ export function matchSite(url, sites) {
   );
 }
 
+// Tells the background worker whether a GRIND session is running. Blocking and
+// check-ins only ever happen while this is true — see background.js.
+export async function setGrindActive(active) {
+  if (!hasChrome()) return;
+  try {
+    await chrome.storage.local.set({ grindActive: active, blockedMinutes: 0 });
+  } catch (error) {}
+}
+
 // Closes every currently-open tab whose site is set to "block" (except this app's own tab).
 // "checkin" sites are left alone — they're tracked on a timer instead, see background.js.
 export async function closeDistractions() {

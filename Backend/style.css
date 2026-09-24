@@ -61,14 +61,18 @@ h2 {
   color: #444;
 }
 
+/* Explicit + !important: some browser/OS dark-mode combinations otherwise
+   render native form-control text in a color that matches the background,
+   making typed text invisible even though the DOM value is correct. */
 input {
   font: inherit;
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
   width: 100%;
-  color: #111;
-  background: #fff;
+  color: #111 !important;
+  background: #fff !important;
+  caret-color: #111;
 }
 
 button {
@@ -395,47 +399,16 @@ button {
   margin: 0;
 }
 
+/* While the settings panel is open it becomes the whole screen. */
+.app-shell.settings-open .task-panel,
+.app-shell.settings-open .list-panel {
+  display: none !important;
+}
+
 .hint {
-  color: #666;
+  color: #555;
   font-size: 0.85rem;
-  margin: 0 0 10px;
-}
-
-textarea {
-  font: inherit;
-  font-family: Consolas, Menlo, monospace;
-  font-size: 0.85rem;
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  color: #111;
-  background: #fff;
-  resize: vertical;
-}
-
-.inline-label {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0;
-  font-size: 0.9rem;
-  color: #444;
-}
-
-.inline-label input {
-  width: 80px;
-}
-
-.settings-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.settings-actions .hint {
+  line-height: 1.4;
   margin: 0;
 }
 
@@ -444,48 +417,123 @@ button:disabled {
   cursor: default;
 }
 
-/* Per-site checkbox list */
+/* Every piece of text in the panel gets an explicit color, so nothing can
+   inherit its way into being invisible. */
+.settings-panel {
+  display: grid;
+  gap: 14px;
+  color: #111;
+}
+
+.settings-panel h2 {
+  margin: 0;
+  color: #111;
+}
+
+.settings-panel strong {
+  color: #111;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #111;
+}
+
+.minutes-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  color: #444;
+}
+
+.minutes-field input {
+  width: 72px;
+}
+
+/* One bordered list; rows are divided by thin lines instead of each being a box. */
 .sites-list {
   list-style: none;
-  margin: 0 0 12px;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
-  max-height: 260px;
+  align-content: start;
+  max-height: 300px;
   overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.sites-list .empty-state {
+  padding: 14px 12px;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .site-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 6px 8px;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #eee;
 }
 
-.site-row .check-item {
+.site-row:last-child {
+  border-bottom: none;
+}
+
+.site-host {
   flex: 1;
   min-width: 0;
-}
-
-.site-row .grind-item-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #111;
+  font-size: 0.9rem;
 }
 
-.site-mode-hint {
-  color: #666;
+/* Block / Check-in segmented toggle */
+.site-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.site-toggle-btn {
+  font: inherit;
   font-size: 0.78rem;
-  white-space: nowrap;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  color: #444;
+  cursor: pointer;
+}
+
+.site-toggle-btn + .site-toggle-btn {
+  border-left: 1px solid #ccc;
+}
+
+.site-toggle-btn.active {
+  background: #000;
+  color: #fff;
 }
 
 .site-delete-btn {
   border: none;
   background: none;
   color: #a00;
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1;
   padding: 2px 6px;
   cursor: pointer;
@@ -495,12 +543,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
   flex-wrap: wrap;
-}
-
-.editor-toggle-row .hint {
-  margin: 0;
 }
 
 #add-site-form {
@@ -508,15 +551,15 @@ button:disabled {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
   padding: 10px;
   border: 1px dashed #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 #add-site-form input[type='text'] {
   flex: 1;
-  min-width: 160px;
+  min-width: 140px;
+  width: auto;
 }
 
 .inline-checkbox {
@@ -530,4 +573,18 @@ button:disabled {
 
 .inline-checkbox input {
   width: auto;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.settings-status {
+  color: #555;
+  font-size: 0.85rem;
 }

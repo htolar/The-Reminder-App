@@ -62,7 +62,9 @@ export const DEFAULT_SITES = [
 export const DEFAULT_CHECKIN_MINUTES = 60;
 
 const LS_KEY = 'reminder-app.settings.v2';
-const hasSync = () => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync;
+// chrome.storage.local (not .sync): this is a per-device tool, and local storage
+// has no sign-in dependency, quota surprises, or write-rate limits to worry about.
+const hasChromeStorage = () => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
 
 function normalizeSites(value) {
   if (!Array.isArray(value)) return DEFAULT_SITES;
@@ -78,8 +80,8 @@ function normalizeSites(value) {
 export async function getSettings() {
   let stored = {};
   try {
-    stored = hasSync()
-      ? await chrome.storage.sync.get(['sites', 'checkInMinutes'])
+    stored = hasChromeStorage()
+      ? await chrome.storage.local.get(['sites', 'checkInMinutes'])
       : JSON.parse(window.localStorage.getItem(LS_KEY) || '{}');
   } catch (error) {
     stored = {};
@@ -95,16 +97,16 @@ export async function getSettings() {
 
 export async function saveSettings({ sites, checkInMinutes }) {
   const payload = { sites: normalizeSites(sites), checkInMinutes };
-  if (hasSync()) {
-    await chrome.storage.sync.set(payload);
+  if (hasChromeStorage()) {
+    await chrome.storage.local.set(payload);
   } else {
     window.localStorage.setItem(LS_KEY, JSON.stringify(payload));
   }
 }
 
 export async function resetSettings() {
-  if (hasSync()) {
-    await chrome.storage.sync.remove(['sites', 'checkInMinutes']);
+  if (hasChromeStorage()) {
+    await chrome.storage.local.remove(['sites', 'checkInMinutes']);
   } else {
     window.localStorage.removeItem(LS_KEY);
   }
