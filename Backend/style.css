@@ -347,15 +347,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.grind-item-minutes {
-  flex-shrink: 0;
-  color: #aeb8c7;
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-  min-width: 3.2em;
-  text-align: right;
-}
-
 .check-item.done .grind-item-title {
   text-decoration: line-through;
 }
