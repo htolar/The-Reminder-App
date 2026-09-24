@@ -623,3 +623,11 @@ button:disabled {
 @keyframes load-warning-reveal {
   to { opacity: 1; pointer-events: auto; }
 }
+
+.version {
+  margin-left: 6px;
+  color: #888;
+  font-size: 0.7rem;
+  font-weight: 400;
+  vertical-align: middle;
+}

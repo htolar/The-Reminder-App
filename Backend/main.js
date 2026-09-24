@@ -1,20 +1,31 @@
-import { startRenderLoop } from './src/Canvas/loop.js';
-import { setupCanvas } from './src/Canvas/setupCanvas.js';
-import { setupInput } from './src/Canvas/input.js';
-import { clamp, lerp, mapRange } from './src/Canvas/math.js';
+// Plain (non-module) script so the app also works when index.html is opened straight
+// from disk. Load order (see index.html): src/Canvas/*.js, src/settings.js, src/focus.js, then this.
+// Wrapped in a function so nothing here can clash with those shared helpers.
+(function () {
+'use strict';
 
-// Chrome-extension features (tab blocking + settings) load lazily, so a problem
-// there can never stop the core task/timer app from working.
-const extReady = Promise.all([import('./src/focus.js'), import('./src/settings.js')])
-  .then(([focus, settings]) => ({ focus, settings }))
+// Chrome-extension features (tab blocking + settings) are looked up lazily, so a
+// problem there can never stop the core task/timer app from working.
+const extReady = Promise.resolve()
+  .then(() => ({
+    focus: { setGrindActive, closeDistractions },
+    settings: { getSettings, saveSettings, resetSettings },
+  }))
   .catch(() => null);
 
+
+// crypto.randomUUID() only exists on secure pages (https / localhost), so fall back
+// to a random id anywhere else instead of crashing the whole app.
+function newId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
 
 const STORAGE_KEY = 'reminder-app.tasks.v1';
 
 const defaultTasks = [
-  { id: crypto.randomUUID(), title: 'Read 20 minutes', minutes: 20, completed: false },
-  { id: crypto.randomUUID(), title: 'Review notes', minutes: 10, completed: false },
+  { id: newId(), title: 'Read 20 minutes', minutes: 20, completed: false },
+  { id: newId(), title: 'Review notes', minutes: 10, completed: false },
 ];
 
 const state = {
@@ -246,7 +257,7 @@ function handleTaskSubmit(event) {
   const minutes = Number(elements.taskDuration.value);
   if (!title || !Number.isFinite(minutes) || minutes <= 0) return;
 
-  const newTask = { id: crypto.randomUUID(), title, minutes, completed: false };
+  const newTask = { id: newId(), title, minutes, completed: false };
   state.tasks.unshift(newTask);
   state.selectedTaskId = newTask.id;
   saveTasks();
@@ -298,7 +309,7 @@ function handleSubtaskSubmit(event) {
   if (!parent || !title || !Number.isFinite(minutes) || minutes <= 0) return;
 
   parent.subtasks = Array.isArray(parent.subtasks) ? parent.subtasks : [];
-  parent.subtasks.push({ id: crypto.randomUUID(), title, minutes, completed: false });
+  parent.subtasks.push({ id: newId(), title, minutes, completed: false });
   saveTasks();
   hideSubtaskMenu();
   render();
@@ -762,3 +773,5 @@ function initialize() {
 }
 
 initialize();
+
+})();

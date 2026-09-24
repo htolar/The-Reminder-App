@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Starts a requestAnimationFrame render loop.
  *
@@ -6,7 +7,7 @@
  *   and the time elapsed since the previous frame (ms).
  * @returns {() => void} A function that stops the loop when called.
  */
-export function startRenderLoop(callback) {
+function startRenderLoop(callback) {
   let frameId = null;
   let previousTime = performance.now();
 

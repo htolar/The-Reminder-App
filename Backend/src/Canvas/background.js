@@ -1,5 +1,5 @@
-import { matchSite } from './src/focus.js';
-import { getSettings } from './src/settings.js';
+// Classic (non-module) service worker: shares matchSite() / getSettings() with the app page.
+importScripts('src/settings.js', 'src/focus.js');
 
 const APP_URL = () => chrome.runtime.getURL('index.html');
 const APP_WINDOW_SIZE = { width: 420, height: 760 };

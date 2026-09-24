@@ -9,19 +9,17 @@
   <body>
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
-    <!-- Removed by main.js as soon as it runs. If it never runs (e.g. index.html opened
-         straight from disk, where Chrome blocks module scripts), this stays on screen. -->
+    <!-- Removed by main.js as soon as it runs. If a script fails to load (for example a
+         file is missing from the folder), this stays on screen instead of a silent dead page. -->
     <div id="load-warning" role="alert">
       <strong>The app's scripts didn't load, so the buttons won't work.</strong><br>
-      If you opened this file directly, put the folder on a web host or run
-      <code>python3 -m http.server</code> here and visit <code>http://localhost:8000</code>.
-      For real site blocking, load it as a Chrome extension instead
-      (chrome://extensions → Load unpacked).
+      Make sure <code>index.html</code>, <code>main.js</code>, <code>style.css</code> and the
+      <code>src</code> folder are all together in the same folder.
     </div>
 
     <main class="app-shell">
       <header class="app-header">
-        <h1>Reminder App</h1>
+        <h1>Reminder App <span class="version">v1.3</span></h1>
         <button id="settings-btn" type="button">Blocked sites</button>
       </header>
 
@@ -131,6 +129,12 @@
       </form>
     </div>
 
-    <script type="module" src="./main.js"></script>
+    <script src="./src/Canvas/math.js"></script>
+    <script src="./src/Canvas/loop.js"></script>
+    <script src="./src/Canvas/input.js"></script>
+    <script src="./src/Canvas/setupCanvas.js"></script>
+    <script src="./src/settings.js"></script>
+    <script src="./src/focus.js"></script>
+    <script src="./main.js"></script>
   </body>
 </html>

@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Prepares a <canvas> element for crisp rendering on high-DPI screens and
  * keeps it sized to the viewport.
@@ -9,7 +10,7 @@
  *   resize: () => { width: number, height: number },
  * }}
  */
-export function setupCanvas(canvas) {
+function setupCanvas(canvas) {
   const context = canvas.getContext('2d');
 
   function resize() {

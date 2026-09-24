@@ -1,5 +1,4 @@
-import { clamp } from './math.js';
-
+'use strict';
 /**
  * Tracks pointer position on `target` (defaults to window) and exposes it
  * as a small mutable state object, normalized to [0, 1] across the viewport.
@@ -15,7 +14,7 @@ import { clamp } from './math.js';
  *   destroy: () => void,
  * }}
  */
-export function setupInput(target = window) {
+function setupInput(target = window) {
   const pointer = {
     x: 0,
     y: 0,

@@ -1,12 +1,12 @@
+'use strict';
 // Tab blocking helpers. Only do anything inside the Chrome extension (they need
 // chrome.tabs / chrome.storage); in a plain browser tab they silently do nothing.
 
-import { getSettings } from './settings.js';
 
 const hasChrome = () => typeof chrome !== 'undefined' && chrome.tabs && chrome.storage;
 
 // Returns the matching site entry ({ host, mode }) for a URL, or null.
-export function matchSite(url, sites) {
+function matchSite(url, sites) {
   let host;
   try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
   return (
@@ -20,7 +20,7 @@ export function matchSite(url, sites) {
 
 // Tells the background worker whether a GRIND session is running. Blocking and
 // check-ins only ever happen while this is true — see background.js.
-export async function setGrindActive(active) {
+async function setGrindActive(active) {
   if (!hasChrome()) return;
   try {
     await chrome.storage.local.set({ grindActive: active, blockedMinutes: 0 });
@@ -29,7 +29,7 @@ export async function setGrindActive(active) {
 
 // Closes every currently-open tab whose site is set to "block" (except this app's own tab).
 // "checkin" sites are left alone — they're tracked on a timer instead, see background.js.
-export async function closeDistractions() {
+async function closeDistractions() {
   if (!hasChrome()) return;
   try {
     const { sites } = await getSettings();

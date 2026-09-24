@@ -1,3 +1,4 @@
+'use strict';
 // User-adjustable settings: which sites are managed, and how each one behaves.
 //
 // Each site is { host, mode }:
@@ -6,7 +7,7 @@
 //   mode: "block"      -> closed the instant it's opened
 //         "checkin"    -> left open, but after checkInMinutes we ask "are you being productive?"
 
-export const DEFAULT_SITES = [
+const DEFAULT_SITES = [
   // wildcards: catch crazygames.com, coolmathgames.com, unblocked-games sites, etc.
   { host: '*game', mode: 'block' },
   { host: '*unblocked', mode: 'block' },
@@ -59,7 +60,7 @@ export const DEFAULT_SITES = [
   { host: 'facebook.com', mode: 'checkin' },
 ];
 
-export const DEFAULT_CHECKIN_MINUTES = 60;
+const DEFAULT_CHECKIN_MINUTES = 60;
 
 const LS_KEY = 'reminder-app.settings.v2';
 // chrome.storage.local (not .sync): this is a per-device tool, and local storage
@@ -77,7 +78,7 @@ function normalizeSites(value) {
   return cleaned.length ? cleaned : DEFAULT_SITES;
 }
 
-export async function getSettings() {
+async function getSettings() {
   let stored = {};
   try {
     stored = hasChromeStorage()
@@ -95,7 +96,7 @@ export async function getSettings() {
   };
 }
 
-export async function saveSettings({ sites, checkInMinutes }) {
+async function saveSettings({ sites, checkInMinutes }) {
   const payload = { sites: normalizeSites(sites), checkInMinutes };
   if (hasChromeStorage()) {
     await chrome.storage.local.set(payload);
@@ -104,7 +105,7 @@ export async function saveSettings({ sites, checkInMinutes }) {
   }
 }
 
-export async function resetSettings() {
+async function resetSettings() {
   if (hasChromeStorage()) {
     await chrome.storage.local.remove(['sites', 'checkInMinutes']);
   } else {
