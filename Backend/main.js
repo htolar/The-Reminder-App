@@ -2,6 +2,7 @@ import { startRenderLoop } from './src/Canvas/loop.js';
 import { setupCanvas } from './src/Canvas/setupCanvas.js';
 import { setupInput } from './src/Canvas/input.js';
 import { clamp, lerp, mapRange } from './src/Canvas/math.js';
+import { closeDistractions } from './src/focus.js';
 
 const STORAGE_KEY = 'reminder-app.tasks.v1';
 
@@ -63,16 +64,28 @@ const pointer = setupInput();
 function loadTasks() {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return defaultTasks;
+    if (stored === null) return defaultTasks; // first run only; an emptied list stays empty
     const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) && parsed.length ? parsed : defaultTasks;
+    return Array.isArray(parsed) ? parsed : defaultTasks;
   } catch (error) {
     return defaultTasks;
   }
 }
 
 function saveTasks() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+  try {
+    // `removing` is a transient animation flag, so it is never persisted.
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(state.tasks, (key, value) => (key === 'removing' ? undefined : value))
+    );
+  } catch (error) {
+    // Storage full or unavailable — keep the app running.
+  }
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // ============================================================================
@@ -131,7 +144,7 @@ function countCompletedUnits(task) {
 function renderSubtaskDetails(subtasks) {
   if (!Array.isArray(subtasks) || !subtasks.length) return '';
   return `<details class="subtask-details"><summary>${subtasks.length} mini task${subtasks.length === 1 ? '' : 's'}</summary><ul class="subtask-list">${subtasks
-    .map((s) => `<li>${s.title} — ${getTaskMinutes(s)} min</li>`)
+    .map((s) => `<li>${escapeHtml(s.title)} — ${getTaskMinutes(s)} min</li>`)
     .join('')}</ul></details>`;
 }
 
@@ -150,7 +163,7 @@ function renderTaskList() {
         <li class="task-item ${selectedClass} ${removingClass}" data-task-id="${task.id}">
           <div style="flex:1">
             <div style="display:flex; align-items:center; gap:8px;">
-              <button type="button" class="task-select" data-task-id="${task.id}">${task.title}</button>
+              <button type="button" class="task-select" data-task-id="${task.id}">${escapeHtml(task.title)}</button>
               <span class="task-duration">${statusText}</span>
             </div>
             ${renderSubtaskDetails(task.subtasks)}
@@ -280,7 +293,7 @@ function renderGrindSubtasks(subtasks, isActive) {
       (s) => `
       <li class="grind-subtask-item">
         <span class="task-duration">${getTaskMinutes(s)} min</span>
-        <span class="grind-item-title">${s.title}</span>
+        <span class="grind-item-title">${escapeHtml(s.title)}</span>
         <input type="checkbox" data-check-subtask="${s.id}" ${s.completed ? 'checked' : ''} ${isActive ? '' : 'disabled'} />
       </li>
     `
@@ -362,7 +375,7 @@ function renderGrindBoard() {
         <div class="grind-task-group ${checked ? 'done' : ''} ${isActive ? 'active' : ''}">
           <label class="check-item ${checked ? 'done' : ''}">
             <span class="task-duration">${getTaskMinutes(task)} min</span>
-            <span class="grind-item-title">${task.title}</span>
+            <span class="grind-item-title">${escapeHtml(task.title)}</span>
             <input type="checkbox" data-check-task="${task.id}" ${checked ? 'checked' : ''} ${isActive && subtasksReady ? '' : 'disabled'} />
           </label>
           ${renderGrindSubtasks(task.subtasks, isActive)}
@@ -445,6 +458,8 @@ function startGrind() {
   const unfinished = getUnfinishedTasks();
   if (!unfinished.length) return;
 
+  closeDistractions(); // Chrome extension only: closes blocklisted tabs (no-op elsewhere)
+
   state.grindMode = true;
   state.grindTaskIds = unfinished.map((t) => t.id);
   state.grindTotalUnits = unfinished.reduce((sum, t) => sum + countUnits(t), 0);
@@ -490,10 +505,6 @@ function returnToHome() {
   removeCompletedTasks();
   render();
 }
-
-// ============================================================================
-// Render + bootstrap
-// ============================================================================
 
 // ============================================================================
 // Background canvas animation

@@ -280,7 +280,7 @@ button {
   gap: 8px;
 }
 
-/* Progress bar — three layered indicators so a change is unmissable:
+/* Progress bar — layered indicators so a change is unmissable:
    1) a big percent number that pops when it changes
    2) a background fill bar behind the segments
    3) the segments themselves, each animating on state change
