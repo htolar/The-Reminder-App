@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Reminder App",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Task timer with GRIND mode. Check a site to close it instantly; leave it unchecked to get asked if you're being productive after a while.",
   "permissions": [
     "tabs",

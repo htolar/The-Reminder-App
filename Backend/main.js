@@ -87,8 +87,17 @@ let editorMode = false; // when true, each site row can be deleted and new ones 
 let previousGrindPercent = null; // used to detect a change and trigger the pulse/flash
 
 const canvas = document.querySelector('#bg-canvas');
-const canvasState = setupCanvas(canvas);
-const pointer = setupInput();
+// The animated background is purely decorative. If any of its helper files (src/Canvas/*.js)
+// are missing or fail, the app carries on without it instead of crashing.
+let canvasState = null;
+let pointer = null;
+try {
+  if (typeof clamp !== 'function') throw new Error('src/Canvas/math.js did not load');
+  canvasState = setupCanvas(canvas);
+  pointer = setupInput();
+} catch (error) {
+  console.warn('Background animation is off (check the src/Canvas folder):', error.message);
+}
 
 // ============================================================================
 // Persistence
@@ -685,6 +694,11 @@ async function resetSettingsToDefaults() {
 // ============================================================================
 
 function initCanvasBackground() {
+  if (!canvasState || !pointer) return;
+  if ([startRenderLoop, lerp, mapRange, clamp].some((fn) => typeof fn !== 'function')) {
+    console.warn('Background animation is off (check the src/Canvas folder).');
+    return;
+  }
   const { resize } = canvasState;
 
   // Smoothed pointer position, eased toward the raw input each frame so the
@@ -692,7 +706,9 @@ function initCanvasBackground() {
   let smoothX = 0.5;
   let smoothY = 0.5;
 
-  startRenderLoop((time) => {
+  let stopLoop = null;
+  stopLoop = startRenderLoop((time) => {
+    try {
     const size = resize();
     const { context } = canvasState;
 
@@ -715,6 +731,10 @@ function initCanvasBackground() {
       context.beginPath();
       context.arc(x, y, radius, 0, Math.PI * 2);
       context.fill();
+    }
+    } catch (error) {
+      console.warn('Background animation stopped:', error.message);
+      if (stopLoop) stopLoop();
     }
   });
 }
@@ -768,7 +788,7 @@ function initialize() {
   });
   syncSelection();
   bindEvents();
-  initCanvasBackground();
+  try { initCanvasBackground(); } catch (error) { console.warn('Background animation is off:', error.message); }
   render();
 }
 
