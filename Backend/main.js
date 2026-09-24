@@ -2,7 +2,13 @@ import { startRenderLoop } from './src/Canvas/loop.js';
 import { setupCanvas } from './src/Canvas/setupCanvas.js';
 import { setupInput } from './src/Canvas/input.js';
 import { clamp, lerp, mapRange } from './src/Canvas/math.js';
-import { closeDistractions } from './src/focus.js';
+
+// Chrome-extension features (tab blocking + settings) load lazily, so a problem
+// there can never stop the core task/timer app from working.
+const extReady = Promise.all([import('./src/focus.js'), import('./src/settings.js')])
+  .then(([focus, settings]) => ({ focus, settings }))
+  .catch(() => null);
+
 
 const STORAGE_KEY = 'reminder-app.tasks.v1';
 
@@ -48,9 +54,23 @@ const elements = {
   subtaskDuration: document.querySelector('#subtask-duration'),
   subtaskParentName: document.querySelector('#subtask-parent-name'),
   closeSubtaskMenu: document.querySelector('#close-subtask-menu'),
+  settingsBtn: document.querySelector('#settings-btn'),
+  settingsPanel: document.querySelector('#settings-panel'),
+  sitesList: document.querySelector('#sites-list'),
+  checkinMinutes: document.querySelector('#checkin-minutes'),
+  editorModeBtn: document.querySelector('#editor-mode-btn'),
+  addSiteForm: document.querySelector('#add-site-form'),
+  addSiteHost: document.querySelector('#add-site-host'),
+  addSiteBlock: document.querySelector('#add-site-block'),
+  settingsSave: document.querySelector('#settings-save'),
+  settingsReset: document.querySelector('#settings-reset'),
+  settingsClose: document.querySelector('#settings-close'),
+  settingsStatus: document.querySelector('#settings-status'),
 };
 
 let subtaskParentId = null;
+let editingSites = [];  // working copy of the site list while the settings panel is open
+let editorMode = false; // when true, each site row can be deleted and new ones can be added
 let previousGrindPercent = null; // used to detect a change and trigger the pulse/flash
 
 const canvas = document.querySelector('#bg-canvas');
@@ -458,7 +478,10 @@ function startGrind() {
   const unfinished = getUnfinishedTasks();
   if (!unfinished.length) return;
 
-  closeDistractions(); // Chrome extension only: closes blocklisted tabs (no-op elsewhere)
+  // Chrome extension only (no-op elsewhere): clear out any already-open "block" sites.
+  // "Block" and "checkin" sites are enforced all the time, not just during GRIND —
+  // this just gives a clean start when you begin a focus session.
+  extReady.then((ext) => ext && ext.focus.closeDistractions());
 
   state.grindMode = true;
   state.grindTaskIds = unfinished.map((t) => t.id);
@@ -507,6 +530,113 @@ function returnToHome() {
 }
 
 // ============================================================================
+// Site settings: checked = closed instantly, unchecked = checked in on later.
+// "Editor mode" additionally lets you add new sites or delete existing ones.
+// ============================================================================
+
+function renderSitesList() {
+  if (!editingSites.length) {
+    elements.sitesList.innerHTML = '<li class="empty-state">No sites yet. Turn on editor mode to add one.</li>';
+    return;
+  }
+
+  elements.sitesList.innerHTML = editingSites
+    .map(
+      (site, index) => `
+        <li class="site-row" data-index="${index}">
+          <label class="check-item">
+            <input type="checkbox" data-site-checkbox="${index}" ${site.mode === 'block' ? 'checked' : ''} />
+            <span class="grind-item-title">${escapeHtml(site.host)}</span>
+          </label>
+          <span class="site-mode-hint">${site.mode === 'block' ? 'Closed instantly' : 'Checked in on'}</span>
+          <button type="button" class="site-delete-btn ${editorMode ? '' : 'hidden'}" data-site-delete="${index}" title="Remove site">×</button>
+        </li>
+      `
+    )
+    .join('');
+
+  elements.sitesList.querySelectorAll('[data-site-checkbox]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const site = editingSites[Number(input.dataset.siteCheckbox)];
+      if (!site) return;
+      site.mode = input.checked ? 'block' : 'checkin';
+      renderSitesList(); // refresh the "Closed instantly" / "Checked in on" hint text
+    });
+  });
+
+  elements.sitesList.querySelectorAll('[data-site-delete]').forEach((button) => {
+    button.addEventListener('click', () => {
+      editingSites.splice(Number(button.dataset.siteDelete), 1);
+      renderSitesList();
+    });
+  });
+}
+
+function setEditorMode(on) {
+  editorMode = on;
+  elements.editorModeBtn.textContent = editorMode ? 'Done editing' : 'Editor mode';
+  elements.editorModeBtn.classList.toggle('primary-btn', editorMode);
+  elements.addSiteForm.classList.toggle('hidden', !editorMode);
+  renderSitesList();
+}
+
+async function fillSettingsForm() {
+  const ext = await extReady;
+  if (!ext) {
+    elements.settingsStatus.textContent = 'Settings are unavailable (extension files failed to load).';
+    return;
+  }
+  const { sites, checkInMinutes } = await ext.settings.getSettings();
+  editingSites = sites.map((site) => ({ ...site }));
+  elements.checkinMinutes.value = checkInMinutes;
+  setEditorMode(false);
+}
+
+async function openSettings() {
+  elements.settingsStatus.textContent = '';
+  elements.settingsPanel.classList.remove('hidden');
+  await fillSettingsForm();
+}
+
+function closeSettings() {
+  elements.settingsPanel.classList.add('hidden');
+  setEditorMode(false);
+}
+
+function handleAddSiteSubmit(event) {
+  event.preventDefault();
+  const host = elements.addSiteHost.value.trim().toLowerCase();
+  if (!host) return;
+  const mode = elements.addSiteBlock.checked ? 'block' : 'checkin';
+  const existing = editingSites.find((s) => s.host === host);
+  if (existing) {
+    existing.mode = mode;
+  } else {
+    editingSites.push({ host, mode });
+  }
+  elements.addSiteForm.reset();
+  elements.addSiteBlock.checked = true;
+  renderSitesList();
+  elements.addSiteHost.focus();
+}
+
+async function saveSettingsFromForm() {
+  const ext = await extReady;
+  if (!ext) return;
+  const checkInMinutes = Math.max(1, Math.round(Number(elements.checkinMinutes.value) || 60));
+  await ext.settings.saveSettings({ sites: editingSites, checkInMinutes });
+  elements.settingsStatus.textContent = 'Saved';
+}
+
+async function resetSettingsToDefaults() {
+  const ext = await extReady;
+  if (!ext) return;
+  await ext.settings.resetSettings();
+  await fillSettingsForm();
+  elements.settingsStatus.textContent = 'Reset to defaults';
+}
+
+// ============================================================================
 // Background canvas animation
 // ============================================================================
 
@@ -552,6 +682,9 @@ function initCanvasBackground() {
 function render() {
   renderTaskList();
   renderGrindBoard();
+  // Settings can't be loosened mid-grind; that would defeat the point.
+  elements.settingsBtn.disabled = state.grindMode;
+  if (state.grindMode) closeSettings();
 }
 
 function bindEvents() {
@@ -573,6 +706,13 @@ function bindEvents() {
   elements.grindExtendBtn.addEventListener('click', extendGrindTimer);
   elements.grindButton.addEventListener('click', completeCurrentTask);
   elements.backToHomeBtn.addEventListener('click', returnToHome);
+
+  elements.settingsBtn.addEventListener('click', openSettings);
+  elements.settingsClose.addEventListener('click', closeSettings);
+  elements.settingsSave.addEventListener('click', saveSettingsFromForm);
+  elements.settingsReset.addEventListener('click', resetSettingsToDefaults);
+  elements.editorModeBtn.addEventListener('click', () => setEditorMode(!editorMode));
+  elements.addSiteForm.addEventListener('submit', handleAddSiteSubmit);
 }
 
 function initialize() {

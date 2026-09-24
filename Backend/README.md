@@ -17,4 +17,5 @@ Back end thinking
 Break LOG
 
 1. When I tried to get rid of the atmosphere certin parts like the actual reminders were removed - 2723ba173a2f444d250831d16c1c906ebba67847
-2. 
+2. When I tried to block games it didnt block games and it made it so you couldnt add any tasks - 7c225ce49b9fa1716744cdaf74250dd63cecb860
+3. I fixed the tasks but now when editing task that are actually blocked text just doesnt appear - 

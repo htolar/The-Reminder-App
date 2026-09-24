@@ -382,3 +382,152 @@ button {
 .progress-code.flash {
   background-color: #2a2a2a;
 }
+
+/* Settings (blocked sites) */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header h1 {
+  margin: 0;
+}
+
+.hint {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0 0 10px;
+}
+
+textarea {
+  font: inherit;
+  font-family: Consolas, Menlo, monospace;
+  font-size: 0.85rem;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  color: #111;
+  background: #fff;
+  resize: vertical;
+}
+
+.inline-label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.inline-label input {
+  width: 80px;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-actions .hint {
+  margin: 0;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Per-site checkbox list */
+.sites-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.site-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.site-row .check-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.site-row .grind-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-mode-hint {
+  color: #666;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.site-delete-btn {
+  border: none;
+  background: none;
+  color: #a00;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.editor-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.editor-toggle-row .hint {
+  margin: 0;
+}
+
+#add-site-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+}
+
+#add-site-form input[type='text'] {
+  flex: 1;
+  min-width: 160px;
+}
+
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #444;
+  white-space: nowrap;
+}
+
+.inline-checkbox input {
+  width: auto;
+}

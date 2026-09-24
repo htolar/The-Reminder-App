@@ -1,26 +1,38 @@
-// Closes distracting Chrome tabs when a grind session starts.
-// Only does anything when running as a Chrome extension page; in a plain
-// browser tab (no chrome.tabs API) it silently does nothing.
+// Tab blocking helpers. Only do anything inside the Chrome extension (they need
+// chrome.tabs / chrome.storage); in a plain browser tab they silently do nothing.
 
-export const DEFAULT_BLOCKLIST = [
-  'youtube.com', 'reddit.com', 'twitter.com', 'x.com', 'twitch.tv',
-  'netflix.com', 'tiktok.com', 'instagram.com', 'facebook.com',
-];
+import { getSettings } from './settings.js';
 
-function isBlocked(url, list) {
+const hasChrome = () => typeof chrome !== 'undefined' && chrome.tabs && chrome.storage;
+
+// Returns the matching site entry ({ host, mode }) for a URL, or null.
+export function matchSite(url, sites) {
   let host;
-  try { host = new URL(url).hostname; } catch { return false; }
-  return list.some((d) => host === d || host.endsWith('.' + d));
+  try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
+  return (
+    sites.find((entry) =>
+      entry.host.startsWith('*')
+        ? host.includes(entry.host.slice(1))
+        : host === entry.host || host.endsWith('.' + entry.host)
+    ) || null
+  );
 }
 
+// Closes every currently-open tab whose site is set to "block" (except this app's own tab).
+// "checkin" sites are left alone — they're tracked on a timer instead, see background.js.
 export async function closeDistractions() {
-  if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.storage) return;
+  if (!hasChrome()) return;
   try {
-    const { blocklist = DEFAULT_BLOCKLIST } = await chrome.storage.sync.get('blocklist');
+    const { sites } = await getSettings();
     const me = await chrome.tabs.getCurrent();
     const tabs = await chrome.tabs.query({});
     const ids = tabs
-      .filter((t) => (!me || t.id !== me.id) && t.url && isBlocked(t.url, blocklist))
+      .filter((t) => {
+        if (me && t.id === me.id) return false;
+        if (!t.url) return false;
+        const match = matchSite(t.url, sites);
+        return match && match.mode === 'block';
+      })
       .map((t) => t.id);
     if (ids.length) await chrome.tabs.remove(ids);
   } catch (error) {

@@ -1,10 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Reminder App",
-  "version": "1.0",
-  "description": "Task timer with GRIND mode. Closes distracting tabs when you start grinding.",
-  "permissions": ["tabs", "storage"],
-  "action": { "default_title": "Open Reminder App" },
-  "background": { "service_worker": "background.js" },
-  "options_page": "options.html"
+  "version": "1.1",
+  "description": "Task timer with GRIND mode. Check a site to close it instantly; leave it unchecked to get asked if you're being productive after a while.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "alarms",
+    "idle"
+  ],
+  "action": {
+    "default_title": "Open Reminder App"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
 }

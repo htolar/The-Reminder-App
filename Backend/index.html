@@ -10,7 +10,44 @@
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
     <main class="app-shell">
-      <h1>Reminder App</h1>
+      <header class="app-header">
+        <h1>Reminder App</h1>
+        <button id="settings-btn" type="button">Blocked sites</button>
+      </header>
+
+      <section id="settings-panel" class="panel hidden">
+        <h2>Sites</h2>
+        <p class="hint">Check a site to close it the instant it's opened. Leave it unchecked to allow it, but get asked if you're being productive after a while.</p>
+
+        <label class="inline-label">
+          Ask "are you being productive?" after
+          <input id="checkin-minutes" type="number" min="1" max="600" value="60" />
+          minutes on an unchecked site
+        </label>
+
+        <ul id="sites-list" class="sites-list"></ul>
+
+        <div class="editor-toggle-row">
+          <button id="editor-mode-btn" type="button">Editor mode</button>
+          <span class="hint">Turn on to add new sites or remove existing ones</span>
+        </div>
+
+        <form id="add-site-form" class="hidden">
+          <input id="add-site-host" type="text" placeholder="e.g. example.com or *word" spellcheck="false" />
+          <label class="inline-checkbox">
+            <input id="add-site-block" type="checkbox" checked />
+            Close instantly
+          </label>
+          <button type="submit" class="primary-btn">Add site</button>
+        </form>
+
+        <div class="settings-actions">
+          <button id="settings-save" type="button" class="primary-btn">Save</button>
+          <button id="settings-reset" type="button">Reset to defaults</button>
+          <button id="settings-close" type="button">Close</button>
+          <span id="settings-status" class="hint"></span>
+        </div>
+      </section>
 
       <section class="panel task-panel">
         <h2>Add a task</h2>
