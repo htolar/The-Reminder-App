@@ -187,9 +187,10 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   border: 1px solid rgba(255, 174, 89, 0.16);
   border-radius: 12px;
-  padding: 8px 10px;
+  padding: 12px 14px;
   background: rgba(4, 18, 37, 0.38);
   transition:
     opacity 0.15s ease,
@@ -211,13 +212,26 @@ button:disabled {
   color: #fff4e4 !important;
   text-align: left;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .task-duration {
   color: #aeb8c7;
   font-size: 0.85rem;
-  margin-right: 8px;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2em;
+  text-align: right;
 }
 
 .empty-state {
