@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
   <head>
@@ -9,8 +10,6 @@
   <body>
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
-    <!-- Removed by main.js as soon as it runs. If a script fails to load (for example a
-         file is missing from the folder), this stays on screen instead of a silent dead page. -->
     <div id="load-warning" role="alert">
       <strong>The app's scripts didn't load, so the buttons won't work.</strong><br>
       Make sure <code>index.html</code>, <code>main.js</code>, <code>style.css</code> and the
@@ -98,11 +97,10 @@
             <span>Progress</span>
             <strong id="grind-progress-percent" class="progress-percent">0%</strong>
           </div>
+
           <div class="progress-track">
-            <div id="grind-progress-track-bg" class="progress-track-fill-bg"></div>
             <div id="grind-progress-fill"></div>
           </div>
-          <pre id="grind-progress-code" class="progress-code"></pre>
         </div>
 
         <button id="grind-button" type="button" class="primary-btn">I'm done</button>
@@ -113,6 +111,7 @@
           <h2>Task list</h2>
           <button id="start-grind-btn" type="button" class="primary-btn">GRIND</button>
         </div>
+
         <ul id="task-list"></ul>
       </section>
     </main>
@@ -122,7 +121,9 @@
         <span>Add mini task</span>
         <button id="close-subtask-menu" type="button">×</button>
       </div>
+
       <p id="subtask-parent-name"></p>
+
       <form id="subtask-form">
         <input id="subtask-name" type="text" placeholder="Mini task" maxlength="60" required />
         <input id="subtask-duration" type="number" min="1" max="180" value="5" required />
@@ -139,3 +140,4 @@
     <script src="./main.js"></script>
   </body>
 </html>
+```
