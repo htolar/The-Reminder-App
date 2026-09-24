@@ -1,3 +1,10 @@
+html {
+  /* Without this, form controls (button/input) can render with the OS's
+     dark-mode default text color even on our white background — making
+     button labels invisible. Pin the whole app to light rendering. */
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -8,9 +15,20 @@ body {
   font-family: system-ui, sans-serif;
   color: #111;
   background: #fff;
+  position: relative;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 .app-shell {
+  position: relative;
+  z-index: 1;
   max-width: 640px;
   margin: 0 auto;
   display: grid;
@@ -31,9 +49,11 @@ h2 {
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
+  background: #fff;
 }
 
-label {
+#task-form label,
+#subtask-form label {
   display: grid;
   gap: 4px;
   margin-bottom: 12px;
@@ -47,6 +67,8 @@ input {
   border: 1px solid #ccc;
   border-radius: 6px;
   width: 100%;
+  color: #111;
+  background: #fff;
 }
 
 button {
@@ -55,6 +77,7 @@ button {
   border: 1px solid #ccc;
   border-radius: 6px;
   background: #fff;
+  color: #111;
   cursor: pointer;
 }
 
@@ -106,6 +129,7 @@ button {
   background: none;
   border: none;
   font: inherit;
+  color: #111;
   text-align: left;
   flex: 1;
   cursor: pointer;
@@ -175,6 +199,10 @@ button {
   color: #666;
 }
 
+.grind-heading span {
+  color: #666;
+}
+
 .grind-heading strong {
   color: #111;
   font-size: 1.2rem;
@@ -203,10 +231,16 @@ button {
 .check-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.check-item.done span {
+.grind-item-title {
+  flex: 1;
+  color: #111 !important;
+  text-align: left;
+}
+
+.check-item.done .grind-item-title {
   text-decoration: line-through;
 }
 
@@ -222,7 +256,11 @@ button {
 .grind-subtask-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.grind-subtask-item .grind-item-title {
+  color: #111;
 }
 
 .grind-timer {
@@ -242,8 +280,11 @@ button {
   gap: 8px;
 }
 
-/* Progress bar — the main focus: segmented, one piece per task/subtask,
-   each one visibly changing state as you go. */
+/* Progress bar — three layered indicators so a change is unmissable:
+   1) a big percent number that pops when it changes
+   2) a background fill bar behind the segments
+   3) the segments themselves, each animating on state change
+   4) a live "code" readout of the exact values driving all of the above */
 .progress-panel {
   margin-bottom: 16px;
 }
@@ -251,21 +292,45 @@ button {
 .progress-label-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.progress-label-row span {
   color: #444;
-  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.progress-percent {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.25s ease;
+}
+
+.progress-percent.pulse {
+  transform: scale(1.18);
 }
 
 .progress-track {
+  position: relative;
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 2px;
-  height: 18px;
-  display: flex;
-  gap: 3px;
+  height: 22px;
+  overflow: hidden;
+}
+
+.progress-track-fill-bg {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: #ddd;
+  transition: width 0.4s ease;
 }
 
 #grind-progress-fill {
+  position: relative;
   display: flex;
   gap: 3px;
   width: 100%;
@@ -275,9 +340,9 @@ button {
 .progress-segment {
   flex: 1;
   min-width: 4px;
-  background: #eee;
+  background: transparent;
   border-radius: 3px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .progress-segment.done {
@@ -289,7 +354,31 @@ button {
   animation: segment-blink 1s ease-in-out infinite;
 }
 
+.progress-segment.just-changed {
+  transform: scaleY(1.35);
+}
+
 @keyframes segment-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+
+/* Live code panel — literally prints the state driving the bar above,
+   and flashes when that state changes. */
+.progress-code {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #111;
+  color: #0f0;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  transition: background-color 0.15s ease;
+}
+
+.progress-code.flash {
+  background-color: #2a2a2a;
 }

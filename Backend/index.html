@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
     <main class="app-shell">
       <h1>Reminder App</h1>
 
@@ -47,11 +49,13 @@
         <div class="progress-panel">
           <div class="progress-label-row">
             <span>Progress</span>
-            <strong id="grind-progress-label">0%</strong>
+            <strong id="grind-progress-percent" class="progress-percent">0%</strong>
           </div>
           <div class="progress-track">
+            <div id="grind-progress-track-bg" class="progress-track-fill-bg"></div>
             <div id="grind-progress-fill"></div>
           </div>
+          <pre id="grind-progress-code" class="progress-code"></pre>
         </div>
 
         <button id="grind-button" type="button" class="primary-btn">I'm done</button>

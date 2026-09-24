@@ -1,3 +1,8 @@
+import { startRenderLoop } from './src/Canvas/loop.js';
+import { setupCanvas } from './src/Canvas/setupCanvas.js';
+import { setupInput } from './src/Canvas/input.js';
+import { clamp, lerp, mapRange } from './src/Canvas/math.js';
+
 const STORAGE_KEY = 'reminder-app.tasks.v1';
 
 const defaultTasks = [
@@ -26,8 +31,10 @@ const elements = {
   grindBoard: document.querySelector('#grind-board'),
   grindChecklist: document.querySelector('#grind-checklist'),
   grindTaskName: document.querySelector('#grind-task-name'),
-  grindProgressLabel: document.querySelector('#grind-progress-label'),
+  grindProgressPercent: document.querySelector('#grind-progress-percent'),
+  grindProgressTrackBg: document.querySelector('#grind-progress-track-bg'),
   grindProgressFill: document.querySelector('#grind-progress-fill'),
+  grindProgressCode: document.querySelector('#grind-progress-code'),
   grindTimer: document.querySelector('#grind-timer'),
   grindPauseBtn: document.querySelector('#grind-pause-btn'),
   grindResetBtn: document.querySelector('#grind-reset-btn'),
@@ -43,6 +50,11 @@ const elements = {
 };
 
 let subtaskParentId = null;
+let previousGrindPercent = null; // used to detect a change and trigger the pulse/flash
+
+const canvas = document.querySelector('#bg-canvas');
+const canvasState = setupCanvas(canvas);
+const pointer = setupInput();
 
 // ============================================================================
 // Persistence
@@ -267,8 +279,9 @@ function renderGrindSubtasks(subtasks, isActive) {
     .map(
       (s) => `
       <li class="grind-subtask-item">
+        <span class="task-duration">${getTaskMinutes(s)} min</span>
+        <span class="grind-item-title">${s.title}</span>
         <input type="checkbox" data-check-subtask="${s.id}" ${s.completed ? 'checked' : ''} ${isActive ? '' : 'disabled'} />
-        <span>${s.title} (${getTaskMinutes(s)} min)</span>
       </li>
     `
     )
@@ -298,14 +311,42 @@ function renderGrindBoard() {
   elements.listPanel.classList.add('hidden');
   elements.grindButton.disabled = !activeTask;
   elements.grindTaskName.textContent = activeTask ? activeTask.title : 'Task';
-  elements.grindProgressLabel.textContent = `${percent}% · ${completedUnits}/${totalUnits}`;
 
-  elements.grindProgressFill.innerHTML = Array.from({ length: totalUnits }, (_, index) => {
-    let segState = 'pending';
-    if (index < completedUnits) segState = 'done';
-    else if (index === completedUnits) segState = 'active';
-    return `<div class="progress-segment ${segState}"></div>`;
-  }).join('');
+  // Build the segment state array once — it drives both the visual bar
+  // and the literal code readout below, so they can never disagree.
+  const segments = Array.from({ length: totalUnits }, (_, index) => {
+    if (index < completedUnits) return 'done';
+    if (index === completedUnits) return 'active';
+    return 'pending';
+  });
+
+  const percentChanged = previousGrindPercent !== null && previousGrindPercent !== percent;
+
+  elements.grindProgressPercent.textContent = `${percent}%`;
+  elements.grindProgressTrackBg.style.width = `${percent}%`;
+  elements.grindProgressFill.innerHTML = segments
+    .map((segState) => `<div class="progress-segment ${segState}"></div>`)
+    .join('');
+
+  if (percentChanged) {
+    elements.grindProgressPercent.classList.add('pulse');
+    elements.grindProgressCode.classList.add('flash');
+    window.setTimeout(() => {
+      elements.grindProgressPercent.classList.remove('pulse');
+      elements.grindProgressCode.classList.remove('flash');
+    }, 300);
+  }
+  previousGrindPercent = percent;
+
+  // Literally print the values driving the bar above, as they exist
+  // right now, formatted as a JS object.
+  elements.grindProgressCode.textContent =
+    'progress = {\n' +
+    `  totalUnits: ${totalUnits},\n` +
+    `  completedUnits: ${completedUnits},\n` +
+    `  percent: ${percent},\n` +
+    `  segments: [${segments.map((s) => `'${s}'`).join(', ')}]\n` +
+    '}';
 
   const minutes = Math.floor(state.grindTimerSeconds / 60);
   const seconds = state.grindTimerSeconds % 60;
@@ -320,8 +361,9 @@ function renderGrindBoard() {
       return `
         <div class="grind-task-group ${checked ? 'done' : ''} ${isActive ? 'active' : ''}">
           <label class="check-item ${checked ? 'done' : ''}">
+            <span class="task-duration">${getTaskMinutes(task)} min</span>
+            <span class="grind-item-title">${task.title}</span>
             <input type="checkbox" data-check-task="${task.id}" ${checked ? 'checked' : ''} ${isActive && subtasksReady ? '' : 'disabled'} />
-            <span>${task.title}</span>
           </label>
           ${renderGrindSubtasks(task.subtasks, isActive)}
         </div>
@@ -453,6 +495,49 @@ function returnToHome() {
 // Render + bootstrap
 // ============================================================================
 
+// ============================================================================
+// Background canvas animation
+// ============================================================================
+
+function initCanvasBackground() {
+  const { resize } = canvasState;
+
+  // Smoothed pointer position, eased toward the raw input each frame so the
+  // parallax drift feels gentle rather than snapping to the cursor.
+  let smoothX = 0.5;
+  let smoothY = 0.5;
+
+  startRenderLoop((time) => {
+    const size = resize();
+    const { context } = canvasState;
+
+    smoothX = lerp(smoothX, pointer.normalizedX, 0.04);
+    smoothY = lerp(smoothY, pointer.normalizedY, 0.04);
+
+    context.clearRect(0, 0, size.width, size.height);
+    context.fillStyle = 'rgba(0, 0, 0, 0.035)';
+
+    const circleCount = 5;
+    for (let i = 0; i < circleCount; i += 1) {
+      const direction = i % 2 === 0 ? 1 : -1;
+      const parallaxX = mapRange(smoothX, 0, 1, -30, 30) * direction;
+      const parallaxY = mapRange(smoothY, 0, 1, -20, 20);
+
+      const x = ((i + 1) / (circleCount + 1)) * size.width + parallaxX;
+      const y = size.height * 0.35 + Math.sin(time / 900 + i) * 28 + parallaxY;
+      const radius = clamp(54 + i * 20 + Math.sin(time / 700) * 10, 40, 160);
+
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+  });
+}
+
+// ============================================================================
+// Render + bootstrap
+// ============================================================================
+
 function render() {
   renderTaskList();
   renderGrindBoard();
@@ -482,6 +567,7 @@ function bindEvents() {
 function initialize() {
   syncSelection();
   bindEvents();
+  initCanvasBackground();
   render();
 }
 
