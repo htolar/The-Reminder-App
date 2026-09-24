@@ -333,18 +333,27 @@ button:disabled {
 
 .check-item {
   display: flex;
+  justify-content: flex-start;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .grind-item-title {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: calc(100% - 30px);
   color: #fff4e4 !important;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.check-item input[type="checkbox"] {
+  flex-shrink: 0;
 }
 
 .check-item.done .grind-item-title {
@@ -436,33 +445,11 @@ button:disabled {
 
 #grind-progress-fill {
   position: relative;
-  display: flex;
-  gap: 3px;
-  width: 100%;
+  width: 0%;
   height: 100%;
-}
-
-.progress-segment {
-  flex: 1;
-  min-width: 4px;
-  background: transparent;
-  border-radius: 3px;
-  transition:
-    background-color 0.3s ease,
-    transform 0.2s ease;
-}
-
-.progress-segment.done {
-  background: #ff9a3d;
-}
-
-.progress-segment.active {
-  background: #ffc078;
-  animation: segment-blink 1s ease-in-out infinite;
-}
-
-.progress-segment.just-changed {
-  transform: scaleY(1.35);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ff9a3d, #f47721);
+  transition: width 0.4s ease;
 }
 
 @keyframes segment-blink {

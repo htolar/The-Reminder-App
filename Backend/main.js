@@ -883,22 +883,13 @@ function renderGrindChecklist(
       'grind-item-title';
 
     title.textContent =
-      task.title;
-
-    const minutes =
-      document.createElement(
-        'span'
-      );
-
-    minutes.className =
-      'grind-item-minutes';
-
-    minutes.textContent =
-      task.minutes + ' min';
+      task.title +
+      ' — ' +
+      task.minutes +
+      ' min';
 
     mainRow.append(
       title,
-      minutes,
       checkbox
     );
 
@@ -964,22 +955,13 @@ function renderGrindChecklist(
             'grind-item-title';
 
           subTitle.textContent =
-            subtask.title;
-
-          const subMinutes =
-            document.createElement(
-              'span'
-            );
-
-          subMinutes.className =
-            'grind-item-minutes';
-
-          subMinutes.textContent =
-            subtask.minutes + ' min';
+            subtask.title +
+            ' — ' +
+            subtask.minutes +
+            ' min';
 
           row.append(
             subTitle,
-            subMinutes,
             subCheck
           );
 
