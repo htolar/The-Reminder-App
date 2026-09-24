@@ -1,1 +1,0 @@
-What I am doing is a reminder/ task to help get work done, but this version is the backend of the project not showing design rather the mechanics like a progress bar or timer. 

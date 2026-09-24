@@ -1,18 +1,18 @@
 Back end thinking 
 
-1. This tool needs the time data to correctly do a timer, and it needs your mouse position data and if your clicking or not. Other than that it needs nothing.
+1. To start it needs the data of which tabs are open, the data to be allowed to close those tabs, it needs data to function the clock correctly.
 
-2. The data is stored on localStorage on your chrome
+2. Its all stored on chrome.storage.local which is on the users computer.
 
-3. The data is perminant 
+3. It is persistant as the data of which tasks are on there stays on your computer.
 
-4. Yes it does need memory in between sessions
+4. Yes, for the users preferences and their tasks these are also stored on their computer.
 
-5. No, it does it all in the browser so no ai needed.
+5. NO
 
-6. Because its all built into the browser there is no need for internet call outs. 
+6. It does not need any right now.
 
-7. Since there is no API needed nothing happens if it "Fails"
+7. Nothing since there is none to begin with.
 
 Break LOG
 

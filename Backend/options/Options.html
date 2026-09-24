@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Quick Check-In</title>
+
+  <style>
+    html {
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      color: #fff4e4;
+
+      background:
+        radial-gradient(
+          circle at 15% 20%,
+          rgba(255, 154, 61, 0.13),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at 85% 80%,
+          rgba(255, 174, 89, 0.09),
+          transparent 28%
+        ),
+        linear-gradient(
+          145deg,
+          #06162d,
+          #0b2345
+        );
+
+      min-height: 100vh;
+
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin: 0 0 8px;
+      color: #fff8ef;
+    }
+
+    p {
+      margin: 0 0 20px;
+
+      color: #c5cbd5;
+
+      line-height: 1.4;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      font: inherit;
+
+      padding: 10px 16px;
+
+      border:
+        1px solid
+        rgba(255, 174, 89, 0.3);
+
+      border-radius: 11px;
+
+      background: #0c2648;
+
+      color: #fff4e4;
+
+      cursor: pointer;
+
+      flex: 1;
+
+      font-weight: 650;
+
+      transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+
+      border-color: #ff9a3d;
+    }
+
+    #yes {
+      background:
+        linear-gradient(
+          135deg,
+          #ff9a3d,
+          #f47721
+        );
+
+      color: #201006;
+
+      border-color: #ff9a3d;
+    }
+
+    #no {
+      background: #102f52;
+      color: #fff4e4;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>
+    Are you being productive?
+  </h1>
+
+  <p id="msg"></p>
+
+  <div class="actions">
+    <button
+      id="yes"
+      type="button"
+    >
+      Yes, I'm working
+    </button>
+
+    <button
+      id="no"
+      type="button"
+    >
+      No, close it
+    </button>
+  </div>
+
+  <script src="checkin.js"></script>
+
+</body>
+</html>
