@@ -1,0 +1,1 @@
+1. I'm going to make it so that the app closes games and other distractions once you click grind. Thus increasing productivity.

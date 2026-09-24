@@ -1,0 +1,633 @@
+html {
+  /* Without this, form controls (button/input) can render with the OS's
+     dark-mode default text color even on our white background — making
+     button labels invisible. Pin the whole app to light rendering. */
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: system-ui, sans-serif;
+  color: #111;
+  background: #fff;
+  position: relative;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+#task-form label,
+#subtask-form label {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+/* Explicit + !important: some browser/OS dark-mode combinations otherwise
+   render native form-control text in a color that matches the background,
+   making typed text invisible even though the DOM value is correct. */
+input {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  color: #111 !important;
+  background: #fff !important;
+  caret-color: #111;
+}
+
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Task list */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  transition: opacity 0.15s ease;
+}
+
+.task-item.selected {
+  border-color: #000;
+}
+
+.task-item.removing {
+  opacity: 0;
+}
+
+.task-select {
+  background: none;
+  border: none;
+  font: inherit;
+  color: #111;
+  text-align: left;
+  flex: 1;
+  cursor: pointer;
+}
+
+.task-duration {
+  color: #666;
+  font-size: 0.85rem;
+  margin-right: 8px;
+}
+
+.empty-state {
+  color: #666;
+}
+
+.subtask-list {
+  list-style: none;
+  margin: 8px 0 0 12px;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #444;
+  display: grid;
+  gap: 4px;
+}
+
+.subtask-details summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+
+/* Subtask popup */
+.subtask-menu {
+  position: fixed;
+  width: 240px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+}
+
+.subtask-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+#subtask-parent-name {
+  margin: 0 0 8px;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+#subtask-form {
+  display: grid;
+  gap: 8px;
+}
+
+/* Grind board */
+.grind-heading {
+  display: grid;
+  gap: 2px;
+  margin: 12px 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.grind-heading span {
+  color: #666;
+}
+
+.grind-heading strong {
+  color: #111;
+  font-size: 1.2rem;
+}
+
+.grind-checklist {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.grind-task-group {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.grind-task-group.active {
+  border-color: #000;
+}
+
+.grind-task-group.done {
+  opacity: 0.6;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grind-item-title {
+  flex: 1;
+  color: #111 !important;
+  text-align: left;
+}
+
+.check-item.done .grind-item-title {
+  text-decoration: line-through;
+}
+
+.grind-subtask-list {
+  list-style: none;
+  margin: 8px 0 0 24px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.grind-subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grind-subtask-item .grind-item-title {
+  color: #111;
+}
+
+.grind-timer {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.grind-timer strong {
+  display: block;
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+}
+
+.grind-timer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Progress bar — layered indicators so a change is unmissable:
+   1) a big percent number that pops when it changes
+   2) a background fill bar behind the segments
+   3) the segments themselves, each animating on state change
+   4) a live "code" readout of the exact values driving all of the above */
+.progress-panel {
+  margin-bottom: 16px;
+}
+
+.progress-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.progress-label-row span {
+  color: #444;
+  font-size: 0.85rem;
+}
+
+.progress-percent {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.25s ease;
+}
+
+.progress-percent.pulse {
+  transform: scale(1.18);
+}
+
+.progress-track {
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 2px;
+  height: 22px;
+  overflow: hidden;
+}
+
+.progress-track-fill-bg {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: #ddd;
+  transition: width 0.4s ease;
+}
+
+#grind-progress-fill {
+  position: relative;
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+}
+
+.progress-segment {
+  flex: 1;
+  min-width: 4px;
+  background: transparent;
+  border-radius: 3px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.progress-segment.done {
+  background: #000;
+}
+
+.progress-segment.active {
+  background: #555;
+  animation: segment-blink 1s ease-in-out infinite;
+}
+
+.progress-segment.just-changed {
+  transform: scaleY(1.35);
+}
+
+@keyframes segment-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Live code panel — literally prints the state driving the bar above,
+   and flashes when that state changes. */
+.progress-code {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #111;
+  color: #0f0;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  transition: background-color 0.15s ease;
+}
+
+.progress-code.flash {
+  background-color: #2a2a2a;
+}
+
+/* Settings (blocked sites) */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header h1 {
+  margin: 0;
+}
+
+/* While the settings panel is open it becomes the whole screen. */
+.app-shell.settings-open .task-panel,
+.app-shell.settings-open .list-panel {
+  display: none !important;
+}
+
+.hint {
+  color: #555;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Every piece of text in the panel gets an explicit color, so nothing can
+   inherit its way into being invisible. */
+.settings-panel {
+  display: grid;
+  gap: 14px;
+  color: #111;
+}
+
+.settings-panel h2 {
+  margin: 0;
+  color: #111;
+}
+
+.settings-panel strong {
+  color: #111;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #111;
+}
+
+.minutes-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  color: #444;
+}
+
+.minutes-field input {
+  width: 72px;
+}
+
+/* One bordered list; rows are divided by thin lines instead of each being a box. */
+.sites-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  align-content: start;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.sites-list .empty-state {
+  padding: 14px 12px;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.site-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.site-row:last-child {
+  border-bottom: none;
+}
+
+.site-host {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111;
+  font-size: 0.9rem;
+}
+
+/* Block / Check-in segmented toggle */
+.site-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.site-toggle-btn {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  color: #444;
+  cursor: pointer;
+}
+
+.site-toggle-btn + .site-toggle-btn {
+  border-left: 1px solid #ccc;
+}
+
+.site-toggle-btn.active {
+  background: #000;
+  color: #fff;
+}
+
+.site-delete-btn {
+  border: none;
+  background: none;
+  color: #a00;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.editor-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#add-site-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+}
+
+#add-site-form input[type='text'] {
+  flex: 1;
+  min-width: 140px;
+  width: auto;
+}
+
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #444;
+  white-space: nowrap;
+}
+
+.inline-checkbox input {
+  width: auto;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.settings-status {
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.settings-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f7f7f7;
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Shown only if main.js never ran to remove it (see index.html). The short delay
+   stops it flashing during a normal load. */
+#load-warning {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 12px 14px;
+  border: 1px solid #a00;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  animation: load-warning-reveal 0s linear 1s forwards;
+}
+
+@keyframes load-warning-reveal {
+  to { opacity: 1; pointer-events: auto; }
+}
+
+.version {
+  margin-left: 6px;
+  color: #888;
+  font-size: 0.7rem;
+  font-weight: 400;
+  vertical-align: middle;
+}
