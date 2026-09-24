@@ -588,3 +588,38 @@ button:disabled {
   color: #555;
   font-size: 0.85rem;
 }
+
+.settings-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f7f7f7;
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Shown only if main.js never ran to remove it (see index.html). The short delay
+   stops it flashing during a normal load. */
+#load-warning {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 12px 14px;
+  border: 1px solid #a00;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  animation: load-warning-reveal 0s linear 1s forwards;
+}
+
+@keyframes load-warning-reveal {
+  to { opacity: 1; pointer-events: auto; }
+}

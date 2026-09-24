@@ -9,6 +9,16 @@
   <body>
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
+    <!-- Removed by main.js as soon as it runs. If it never runs (e.g. index.html opened
+         straight from disk, where Chrome blocks module scripts), this stays on screen. -->
+    <div id="load-warning" role="alert">
+      <strong>The app's scripts didn't load, so the buttons won't work.</strong><br>
+      If you opened this file directly, put the folder on a web host or run
+      <code>python3 -m http.server</code> here and visit <code>http://localhost:8000</code>.
+      For real site blocking, load it as a Chrome extension instead
+      (chrome://extensions → Load unpacked).
+    </div>
+
     <main class="app-shell">
       <header class="app-header">
         <h1>Reminder App</h1>
@@ -18,6 +28,8 @@
       <section id="settings-panel" class="panel settings-panel hidden">
         <h2>Blocked sites</h2>
         <p class="hint">Only active while GRIND is running. <strong>Block</strong> closes a site the moment you open it. <strong>Check-in</strong> lets it stay open, then asks if you're being productive.</p>
+
+        <p id="settings-notice" class="settings-notice hidden">You're using the regular website, so other tabs can't be blocked here. Your list is saved in this browser only. Install the Chrome extension for real blocking.</p>
 
         <label class="setting-row">
           <span>Ask "are you being productive?" after</span>

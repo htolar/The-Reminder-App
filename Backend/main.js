@@ -67,6 +67,7 @@ const elements = {
   settingsReset: document.querySelector('#settings-reset'),
   settingsClose: document.querySelector('#settings-close'),
   settingsStatus: document.querySelector('#settings-status'),
+  settingsNotice: document.querySelector('#settings-notice'),
 };
 
 let subtaskParentId = null;
@@ -604,6 +605,9 @@ async function fillSettingsForm() {
       showSettingsMessage('Site blocking only works when this is loaded as a Chrome extension. Load this folder via chrome://extensions → Load unpacked, then open the app from the toolbar icon.');
       return;
     }
+    // Regular website (not the extension): the list can be edited, but tabs can't be closed.
+    const isExtension = typeof chrome !== 'undefined' && !!chrome.tabs && !!chrome.storage;
+    elements.settingsNotice.classList.toggle('hidden', isExtension);
     const { sites, checkInMinutes } = await ext.settings.getSettings();
     editingSites = sites.map((site) => ({ ...site }));
     elements.checkinMinutes.value = checkInMinutes;
@@ -745,6 +749,7 @@ function bindEvents() {
 }
 
 function initialize() {
+  document.querySelector('#load-warning')?.remove(); // scripts loaded fine, so the warning isn't needed
   extReady.then((ext) => ext && ext.focus.setGrindActive(false)); // a freshly loaded page never has a session running
   // Closing the app window ends the session right away (background.js also double-checks).
   window.addEventListener('pagehide', () => {
