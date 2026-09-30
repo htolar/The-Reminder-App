@@ -2177,6 +2177,11 @@ async function initializeApp() {
   if (warning) {
     warning.remove();
   }
+
+  // First-run tour (src/onboarding/tour.js). Does nothing after the first time.
+  if (window.Onboarding) {
+    window.Onboarding.startIfFirstRun();
+  }
 }
 
 /* =========================================================

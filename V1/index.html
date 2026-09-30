@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reminder App</title>
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./src/onboarding/onboarding.css" />
   </head>
   <body>
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
@@ -19,7 +20,10 @@
     <main class="app-shell">
       <header class="app-header">
         <h1>Reminder App <span class="version">v1.4</span></h1>
-        <button id="settings-btn" type="button">Blocked sites</button>
+        <div class="header-actions">
+          <button id="help-btn" type="button" class="help-btn" aria-label="Show the quick tour">?</button>
+          <button id="settings-btn" type="button">Blocked sites</button>
+        </div>
       </header>
 
       <section id="settings-panel" class="panel settings-panel hidden">
@@ -136,6 +140,8 @@
     <script src="./src/Canvas/setupCanvas.js"></script>
     <script src="./options/settings.js"></script>
     <script src="./src/src/focus.js"></script>
+    <script src="./src/onboarding/tooltips.js"></script>
+    <script src="./src/onboarding/tour.js"></script>
     <script src="./main.js"></script>
   </body>
 </html>
