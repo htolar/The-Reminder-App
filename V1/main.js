@@ -169,6 +169,7 @@ async function safeResetSettings() {
 function cacheElements() {
   const ids = [
     'settings-btn',
+    'help-btn',
     'settings-panel',
     'settings-notice',
     'checkin-minutes',
@@ -2181,6 +2182,11 @@ async function initializeApp() {
   // First-run tour (src/onboarding/tour.js). Does nothing after the first time.
   if (window.Onboarding) {
     window.Onboarding.startIfFirstRun();
+  } else if (elements.helpBtn) {
+    // tour.js didn't load, so say so instead of silently doing nothing.
+    elements.helpBtn.addEventListener('click', () => {
+      alert('The tour file was not found.\n\nMake sure src/onboarding/tour.js exists (inside the src folder), then reload the extension at chrome://extensions.');
+    });
   }
 }
 

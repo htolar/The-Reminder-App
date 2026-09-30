@@ -31,6 +31,7 @@
       resolve() {
         return {
           target: $('.task-panel'),
+          badge: 'START HERE',
           text: 'Start here. Type what you want to get done and how many minutes you will give it, then press Add task.',
         };
       },
@@ -44,6 +45,7 @@
         if (isShown($('#subtask-menu'))) {
           return {
             target: $('#subtask-menu'),
+            badge: 'FILL THIS IN',
             text: 'Name the mini task and give it a few minutes, then press Add.',
           };
         }
@@ -51,11 +53,13 @@
         if (miniButton) {
           return {
             target: miniButton,
+            badge: 'CLICK + MINI',
             text: 'Press + mini to break your task into smaller steps. Each one gets its own checkbox and time during GRIND.',
           };
         }
         return {
           target: $('.list-panel'),
+          badge: 'LOOK HERE',
           text: 'Once you have a task, a + mini button shows up on it. Use it to split the task into smaller steps.',
         };
       },
@@ -73,11 +77,13 @@
             // The panel is taller than the window, so point at its button row;
             // the card then sits above the buttons instead of covering them.
             target: $('#settings-panel .settings-actions'),
+            badge: 'SAVE OR CLOSE',
             text: 'Block closes a site the moment you open it. Check-in lets it stay open, then asks if you are being productive. Press Edit list to change them, then Save and Close.',
           };
         }
         return {
           target: $('#settings-btn'),
+          badge: 'CLICK HERE',
           text: 'Blocked sites lets you choose which websites get shut down while GRIND is running. Press it to see the list.',
         };
       },
@@ -92,6 +98,7 @@
       resolve() {
         return {
           target: $('#start-grind-btn'),
+          badge: 'CLICK GRIND',
           text: 'When you are ready, press GRIND. A countdown starts for your first task and your blocked sites get closed until you are done.',
         };
       },
@@ -136,6 +143,8 @@
   let card = null;
   let ui = {};
   let highlighted = null;
+  let spotlight = null;
+  let badge = null;
   let shownKey = '';
 
   function buildCard() {
@@ -170,30 +179,37 @@
     card.append(ui.label, ui.title, ui.text, actions);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
+    buildSpotlight();
+  }
+
+  // The spotlight: a bright frame drawn over the target. Its huge shadow
+  // darkens everything else on screen, so the target is impossible to miss.
+  // It ignores the mouse, so you can still click the highlighted thing.
+  function buildSpotlight() {
+    spotlight = document.createElement('div');
+    spotlight.className = 'tour-spotlight';
+    badge = document.createElement('div');
+    badge.className = 'tour-badge';
+    spotlight.appendChild(badge);
+    overlay.appendChild(spotlight);
   }
 
   function setHighlight(el) {
-    if (highlighted === el) return;
-    clearHighlight();
-    if (!el) return;
-    // The highlight needs a positioned element, but fixed/absolute ones
-    // (the mini task popup) must keep the position they already have.
-    if (getComputedStyle(el).position === 'static') {
-      el.style.position = 'relative';
-      el.dataset.tourPosition = '1';
-    }
-    el.classList.add('tour-highlight');
     highlighted = el;
   }
 
   function clearHighlight() {
-    if (!highlighted) return;
-    highlighted.classList.remove('tour-highlight');
-    if (highlighted.dataset.tourPosition) {
-      highlighted.style.position = '';
-      delete highlighted.dataset.tourPosition;
-    }
     highlighted = null;
+  }
+
+  function moveSpotlight(el, rect) {
+    const pad = 6;
+    const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    spotlight.style.top = rect.top - pad + 'px';
+    spotlight.style.left = rect.left - pad + 'px';
+    spotlight.style.width = rect.width + pad * 2 + 'px';
+    spotlight.style.height = rect.height + pad * 2 + 'px';
+    spotlight.style.borderRadius = radius + pad + 'px';
   }
 
   function placeCard(rect) {
@@ -222,7 +238,7 @@
 
   function render() {
     const step = STEPS[stepIndex];
-    const { target, text } = step.resolve();
+    const { target, text, badge: badgeText } = step.resolve();
 
     if (!target || target.getBoundingClientRect().width === 0) {
       goTo(stepIndex + 1); // nothing to point at (e.g. GRIND already running)
@@ -235,15 +251,21 @@
       ui.label.textContent = 'Step ' + (stepIndex + 1) + ' of ' + STEPS.length;
       ui.title.textContent = step.title;
       ui.text.textContent = text;
+      badge.textContent = badgeText || 'LOOK HERE';
       ui.next.textContent = stepIndex === STEPS.length - 1 ? 'Got it' : 'Next';
     }
 
     if (target !== highlighted) {
       setHighlight(target);
-      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // Scroll up/down only, never sideways.
+      const r = target.getBoundingClientRect();
+      if (r.top < 8) window.scrollBy({ top: r.top - 8, behavior: 'smooth' });
+      else if (r.bottom > window.innerHeight - 8) window.scrollBy({ top: r.bottom - window.innerHeight + 8, behavior: 'smooth' });
     }
 
-    placeCard(target.getBoundingClientRect());
+    const rect = target.getBoundingClientRect();
+    moveSpotlight(target, rect);
+    placeCard(rect);
   }
 
   function frame() {
@@ -282,7 +304,7 @@
     cancelAnimationFrame(frameId);
     clearHighlight();
     if (overlay) overlay.remove();
-    overlay = card = null;
+    overlay = card = spotlight = badge = null;
     ui = {};
     markSeen();
   }

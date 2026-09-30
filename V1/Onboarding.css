@@ -34,13 +34,6 @@
   pointer-events: none;
 }
 
-.first-run-tour::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 7, 18, 0.18);
-  pointer-events: none;
-}
 
 .tour-card {
   position: fixed;
@@ -86,26 +79,55 @@
   margin-top: 14px;
 }
 
-/* The element currently being pointed at. tour.js adds
-   position: relative itself when the element is static, so
-   fixed/absolute elements (like the mini task popup) keep
-   their own positioning. */
-.tour-highlight {
-  z-index: 2002;
+/* The spotlight sits exactly over the thing to click. The giant
+   shadow dims the rest of the screen; the frame and glow pulse. */
+.tour-spotlight {
+  position: fixed;
+  z-index: 2001;
+  border: 4px solid #ffd23f;
+  pointer-events: none;
   box-shadow:
-    0 0 0 3px rgba(255, 174, 89, 0.92),
-    0 0 22px rgba(255, 154, 61, 0.65),
-    0 8px 24px rgba(0, 0, 0, 0.35) !important;
-  animation: tour-pulse 1.35s ease-in-out infinite;
+    0 0 0 9999px rgba(0, 5, 15, 0.8),
+    0 0 18px 4px rgba(255, 210, 63, 0.9);
+  animation: tour-glow 1s ease-in-out infinite;
 }
 
-@keyframes tour-pulse {
+@keyframes tour-glow {
   0%, 100% {
-    filter: brightness(1);
+    box-shadow:
+      0 0 0 9999px rgba(0, 5, 15, 0.8),
+      0 0 16px 3px rgba(255, 210, 63, 0.85);
+    border-color: #ffd23f;
   }
   50% {
-    filter: brightness(1.16);
+    box-shadow:
+      0 0 0 9999px rgba(0, 5, 15, 0.8),
+      0 0 42px 14px rgba(255, 170, 40, 0.75);
+    border-color: #fff3a8;
   }
+}
+
+/* Bouncing label that straddles the top edge of the frame. */
+.tour-badge {
+  position: absolute;
+  top: 0;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffd23f;
+  color: #1a0f00;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  animation: tour-badge-bounce 0.7s ease-in-out infinite;
+}
+
+@keyframes tour-badge-bounce {
+  0%, 100% { transform: translateY(-50%); }
+  50% { transform: translateY(calc(-50% - 5px)); }
 }
 
 /* ---------- Hover descriptions ---------- */
