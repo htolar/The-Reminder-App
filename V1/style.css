@@ -714,3 +714,158 @@ button:disabled {
     pointer-events: auto;
   }
 }
+
+/* ============================================================
+   ONBOARDING: first-run tour + hover descriptions
+   Loaded by index.html after style.css.
+   Logic lives in tour.js and tooltips.js in this folder.
+   ============================================================ */
+
+/* ---------- Header: help button next to "Blocked sites" ---------- */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-actions button:not(.help-btn) {
+  white-space: nowrap;
+}
+
+.help-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ---------- First-run tour ---------- */
+
+.first-run-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+
+.tour-card {
+  position: fixed;
+  z-index: 2003;
+  width: 340px;
+  max-width: calc(100vw - 16px);
+  padding: 16px;
+  border: 1px solid rgba(255, 174, 89, 0.55);
+  border-radius: 16px;
+  background: rgba(7, 26, 52, 0.98);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 154, 61, 0.08),
+    0 0 28px rgba(255, 154, 61, 0.12);
+  pointer-events: auto;
+}
+
+.tour-step-label {
+  margin-bottom: 5px;
+  color: #ffad59;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tour-card h2 {
+  margin: 0 0 7px;
+  font-size: 1rem;
+}
+
+.tour-card p {
+  margin: 0;
+  color: #cbd3df;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* The spotlight sits exactly over the thing to click. The giant
+   shadow dims the rest of the screen; the frame and glow pulse. */
+.tour-spotlight {
+  position: fixed;
+  z-index: 2001;
+  border: 4px solid #ffd23f;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 9999px rgba(0, 5, 15, 0.8),
+    0 0 18px 4px rgba(255, 210, 63, 0.9);
+  animation: tour-glow 1s ease-in-out infinite;
+}
+
+@keyframes tour-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 9999px rgba(0, 5, 15, 0.8),
+      0 0 16px 3px rgba(255, 210, 63, 0.85);
+    border-color: #ffd23f;
+  }
+  50% {
+    box-shadow:
+      0 0 0 9999px rgba(0, 5, 15, 0.8),
+      0 0 42px 14px rgba(255, 170, 40, 0.75);
+    border-color: #fff3a8;
+  }
+}
+
+/* Bouncing label that straddles the top edge of the frame. */
+.tour-badge {
+  position: absolute;
+  top: 0;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffd23f;
+  color: #1a0f00;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  animation: tour-badge-bounce 0.7s ease-in-out infinite;
+}
+
+@keyframes tour-badge-bounce {
+  0%, 100% { transform: translateY(-50%); }
+  50% { transform: translateY(calc(-50% - 5px)); }
+}
+
+/* ---------- Hover descriptions ---------- */
+
+.hover-tip {
+  position: fixed;
+  z-index: 2100;
+  max-width: 230px;
+  padding: 8px 11px;
+  border: 1px solid rgba(255, 174, 89, 0.55);
+  border-radius: 10px;
+  background: #0a2343;
+  color: #fff4e4;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.hover-tip.visible {
+  opacity: 1;
+}
