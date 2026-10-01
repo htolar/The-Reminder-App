@@ -1715,6 +1715,9 @@ async function startGrind() {
   await closeDistractionsSafe();
 
   renderAll();
+
+  // First time on the GRIND screen: show its tour.
+  window.Onboarding.startIfFirstRun();
 }
 
 async function endGrind() {
@@ -2221,34 +2224,26 @@ document.addEventListener(
 
 
 /* =========================================================
-   ONBOARDING: FIRST-RUN TOUR
-   Highlights the buttons in the order you should use them.
-   Edit STEPS to change the tour. The ? button replays it.
+   ONBOARDING: TOURS
+   Two tours that highlight things in the order you should use them:
+     HOME  - Add a task, + mini, Blocked sites, GRIND
+     GRIND - the GRIND screen (task, timer, progress, I'm done, Back)
+   Each one shows by itself the first time you reach that screen.
+   The ? button in the header replays the tour for the screen you are on.
+   To change a tour, edit its list of steps below.
    ========================================================= */
-// First-run tour. The first time the app opens it highlights, one at a time,
-// the things to use in order:
-//   1. the Add a task box
-//   2. the + mini button on a task
-//   3. the Blocked sites button
-//   4. the GRIND button
-//
-// Each step moves on by itself when you do the thing (add a task, close the
-// mini task popup, close the blocked sites panel, press GRIND). Next and
-// Skip tour are always there too. The ? button in the header replays it.
-//
-// To change the tour, edit STEPS below.
-
 (() => {
-  const DONE_KEY = 'reminder-app.tourDone.v1';
-
   const $ = (selector) => document.querySelector(selector);
   const isShown = (el) => !!el && !el.classList.contains('hidden');
   const taskCount = () => document.querySelectorAll('#task-list .task-item').length;
+  const onGrindScreen = () => isShown($('#grind-board'));
 
   // Anything a step needs to remember while it is showing.
   let memo = {};
 
-  const STEPS = [
+  // ---------- HOME tour ----------
+
+  const HOME_STEPS = [
     {
       title: 'Add a task',
       onEnter() {
@@ -2334,26 +2329,100 @@ document.addEventListener(
     },
   ];
 
-  // ---------- remembering that the tour was seen ----------
+  // ---------- GRIND tour ----------
 
-  async function wasSeen() {
+  const GRIND_STEPS = [
+    {
+      title: 'Your current task',
+      resolve() {
+        return {
+          target: $('#grind-board .grind-heading'),
+          badge: 'YOUR TASK',
+          text: 'This is the task you are working on right now. If it has mini tasks, they show up below it as checkboxes. Tick each one as you finish it.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'The timer',
+      resolve() {
+        return {
+          target: $('#grind-board .grind-timer'),
+          badge: 'THE TIMER',
+          text: 'The countdown for this task. Pause stops it, Reset starts it over, and +5 min gives you extra time.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'Your progress',
+      resolve() {
+        return {
+          target: $('#grind-board .progress-panel'),
+          badge: 'YOUR PROGRESS',
+          text: 'Shows how much of your work you have finished so far. It fills up as you complete tasks and mini tasks.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'Finish the task',
+      resolve() {
+        return {
+          target: $('#grind-button'),
+          badge: 'WHEN YOU ARE DONE',
+          text: 'Press this when you finish the task. It marks it complete and moves you on to the next one.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'Leaving GRIND',
+      resolve() {
+        return {
+          target: $('#back-to-home-btn'),
+          badge: 'LEAVE GRIND',
+          text: 'Back takes you out of GRIND and returns you to your task list.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+  ];
+
+  const HOME = {
+    doneKey: 'reminder-app.tourDone.v1',
+    steps: HOME_STEPS,
+    endOn: '#start-grind-btn', // pressing GRIND ends the home tour
+    stillValid: () => !onGrindScreen(),
+  };
+
+  const GRIND = {
+    doneKey: 'reminder-app.grindTourDone.v1',
+    steps: GRIND_STEPS,
+    endOn: '#grind-button, #back-to-home-btn',
+    stillValid: () => onGrindScreen(),
+  };
+
+  // ---------- remembering which tours were seen ----------
+
+  async function wasSeen(key) {
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        const saved = await chrome.storage.local.get(DONE_KEY);
-        return !!saved[DONE_KEY];
+        const saved = await chrome.storage.local.get(key);
+        return !!saved[key];
       }
-      return localStorage.getItem(DONE_KEY) === '1';
+      return localStorage.getItem(key) === '1';
     } catch (error) {
       return false;
     }
   }
 
-  async function markSeen() {
+  async function markSeen(key) {
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        await chrome.storage.local.set({ [DONE_KEY]: true });
+        await chrome.storage.local.set({ [key]: true });
       } else {
-        localStorage.setItem(DONE_KEY, '1');
+        localStorage.setItem(key, '1');
       }
     } catch (error) {
       // Not being able to save just means the tour may show again.
@@ -2362,6 +2431,7 @@ document.addEventListener(
 
   // ---------- on-screen pieces ----------
 
+  let tour = HOME;
   let active = false;
   let stepIndex = 0;
   let frameId = 0;
@@ -2420,14 +2490,6 @@ document.addEventListener(
     overlay.appendChild(spotlight);
   }
 
-  function setHighlight(el) {
-    highlighted = el;
-  }
-
-  function clearHighlight() {
-    highlighted = null;
-  }
-
   function moveSpotlight(el, rect) {
     const pad = 6;
     const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
@@ -2436,6 +2498,15 @@ document.addEventListener(
     spotlight.style.width = rect.width + pad * 2 + 'px';
     spotlight.style.height = rect.height + pad * 2 + 'px';
     spotlight.style.borderRadius = radius + pad + 'px';
+
+    // Keep the label fully on screen, even over a small button near an edge.
+    const bw = badge.offsetWidth;
+    const frameLeft = rect.left - pad;
+    const frameW = rect.width + pad * 2;
+    let screenLeft = frameLeft + frameW - bw - 14; // right-aligned by default
+    screenLeft = Math.max(6, Math.min(screenLeft, window.innerWidth - bw - 6));
+    badge.style.right = 'auto';
+    badge.style.left = screenLeft - frameLeft - 4 + 'px'; // -4 = frame border
   }
 
   function placeCard(rect) {
@@ -2463,26 +2534,26 @@ document.addEventListener(
   // ---------- running the steps ----------
 
   function render() {
-    const step = STEPS[stepIndex];
+    const step = tour.steps[stepIndex];
     const { target, text, badge: badgeText } = step.resolve();
 
     if (!target || target.getBoundingClientRect().width === 0) {
-      goTo(stepIndex + 1); // nothing to point at (e.g. GRIND already running)
+      goTo(stepIndex + 1); // nothing to point at, skip this step
       return;
     }
 
     const key = stepIndex + '|' + text;
     if (key !== shownKey) {
       shownKey = key;
-      ui.label.textContent = 'Step ' + (stepIndex + 1) + ' of ' + STEPS.length;
+      ui.label.textContent = 'Step ' + (stepIndex + 1) + ' of ' + tour.steps.length;
       ui.title.textContent = step.title;
       ui.text.textContent = text;
       badge.textContent = badgeText || 'LOOK HERE';
-      ui.next.textContent = stepIndex === STEPS.length - 1 ? 'Got it' : 'Next';
+      ui.next.textContent = stepIndex === tour.steps.length - 1 ? 'Got it' : 'Next';
     }
 
     if (target !== highlighted) {
-      setHighlight(target);
+      highlighted = target;
       // Scroll up/down only, never sideways.
       const r = target.getBoundingClientRect();
       if (r.top < 8) window.scrollBy({ top: r.top - 8, behavior: 'smooth' });
@@ -2496,7 +2567,11 @@ document.addEventListener(
 
   function frame() {
     if (!active) return;
-    if (STEPS[stepIndex].shouldAdvance()) {
+    if (!tour.stillValid()) { // e.g. they left the screen this tour is about
+      finish();
+      return;
+    }
+    if (tour.steps[stepIndex].shouldAdvance()) {
       goTo(stepIndex + 1);
     }
     if (active) {
@@ -2506,18 +2581,19 @@ document.addEventListener(
   }
 
   function goTo(index) {
-    if (index >= STEPS.length) {
+    if (index >= tour.steps.length) {
       finish();
       return;
     }
     stepIndex = index;
     memo = {};
     shownKey = '';
-    if (STEPS[stepIndex].onEnter) STEPS[stepIndex].onEnter();
+    if (tour.steps[stepIndex].onEnter) tour.steps[stepIndex].onEnter();
   }
 
-  function start() {
-    if (active) return;
+  function start(which) {
+    if (active) finish();
+    tour = which;
     active = true;
     buildCard();
     goTo(0);
@@ -2528,32 +2604,38 @@ document.addEventListener(
     if (!active) return;
     active = false;
     cancelAnimationFrame(frameId);
-    clearHighlight();
+    highlighted = null;
     if (overlay) overlay.remove();
     overlay = card = spotlight = badge = null;
     ui = {};
-    markSeen();
+    markSeen(tour.doneKey);
   }
 
-  // Pressing GRIND at any point means they are off and running.
+  // Pressing the button a tour is leading up to means they are off and running.
   document.addEventListener('click', (event) => {
-    if (active && event.target instanceof Element && event.target.closest('#start-grind-btn')) {
+    if (active && event.target instanceof Element && event.target.closest(tour.endOn)) {
       finish();
     }
   }, true);
 
-  // The ? button replays the tour.
+  // The ? button replays the tour for the screen you are on.
   document.addEventListener('click', (event) => {
     if (event.target instanceof Element && event.target.closest('#help-btn')) {
-      start();
+      start(onGrindScreen() ? GRIND : HOME);
     }
   });
 
   window.Onboarding = {
+    // Called when the app opens and again right after GRIND starts.
+    // Shows the tour for the current screen if it has not been seen yet.
     async startIfFirstRun() {
-      if (!(await wasSeen())) start();
+      if (active) return;
+      const which = onGrindScreen() ? GRIND : HOME;
+      if (!(await wasSeen(which.doneKey))) start(which);
     },
-    replay: start,
+    replay() {
+      start(onGrindScreen() ? GRIND : HOME);
+    },
   };
 })();
 
