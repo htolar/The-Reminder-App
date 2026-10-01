@@ -2226,7 +2226,7 @@ document.addEventListener(
 /* =========================================================
    ONBOARDING: TOURS
    Two tours that highlight things in the order you should use them:
-     HOME  - Add a task, + mini, Blocked sites, GRIND
+     HOME  - Add a task, + mini, a mini tour of Blocked sites, GRIND
      GRIND - the GRIND screen (task, timer, progress, I'm done, Back)
    Each one shows by itself the first time you reach that screen.
    The ? button in the header replays the tour for the screen you are on.
@@ -2291,28 +2291,72 @@ document.addEventListener(
       },
     },
     {
-      title: 'Pick what gets blocked',
+      title: 'Open Blocked sites',
       resolve() {
-        if (isShown($('#settings-panel'))) {
-          return {
-            // The panel is taller than the window, so point at its button row;
-            // the card then sits above the buttons instead of covering them.
-            target: $('#settings-panel .settings-actions'),
-            badge: 'SAVE OR CLOSE',
-            text: 'Block closes a site the moment you open it. Check-in lets it stay open, then asks if you are being productive. Press Edit list to change them, then Save and Close.',
-          };
-        }
         return {
           target: $('#settings-btn'),
           badge: 'CLICK HERE',
-          text: 'Blocked sites lets you choose which websites get shut down while GRIND is running. Press it to see the list.',
+          text: 'Blocked sites lets you choose which websites get shut down while GRIND is running. Press Next and the tour will open it for you.',
         };
       },
-      shouldAdvance() {
-        const open = isShown($('#settings-panel'));
-        if (open) memo.panelSeen = true;
-        return !!memo.panelSeen && !open;
+      // Next opens the panel; the step finishes once it is actually showing.
+      onNext() {
+        if (!isShown($('#settings-panel'))) $('#settings-btn').click();
+        return false;
       },
+      shouldAdvance() {
+        return isShown($('#settings-panel'));
+      },
+    },
+    {
+      title: 'Block or Check-in',
+      resolve() {
+        return {
+          target: $('#sites-list'),
+          badge: 'THE LIST',
+          text: 'These are the sites that count as distractions. Block closes a site the moment you open it. Check-in lets it stay open, then asks if you are being productive.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'Check-in time',
+      resolve() {
+        return {
+          target: $('#settings-panel .setting-row'),
+          badge: 'SET THE TIME',
+          text: 'For Check-in sites, this is how many minutes they can stay open before you get asked if you are being productive.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'Change the list',
+      resolve() {
+        return {
+          target: $('#settings-panel .editor-toggle-row'),
+          badge: 'EDIT LIST',
+          text: 'Press Edit list to add your own sites, remove ones you do not want, or switch a site between Block and Check-in.',
+        };
+      },
+      shouldAdvance() { return false; },
+    },
+    {
+      title: 'Save your changes',
+      resolve() {
+        return {
+          // The panel is taller than the window, so the card sits above this row.
+          target: $('#settings-panel .settings-actions'),
+          badge: 'SAVE OR CLOSE',
+          text: 'Save keeps your changes. Reset to defaults brings back the original list. Close shuts the panel. Press Next and the tour will close it for you.',
+        };
+      },
+      // Next closes the panel so the tour can carry on with the home screen.
+      onNext() {
+        if (isShown($('#settings-panel'))) $('#settings-close').click();
+        return true;
+      },
+      shouldAdvance() { return false; },
     },
     {
       title: 'Start GRIND',
@@ -2469,7 +2513,13 @@ document.addEventListener(
     ui.next = document.createElement('button');
     ui.next.type = 'button';
     ui.next.className = 'primary-btn';
-    ui.next.addEventListener('click', () => goTo(stepIndex + 1));
+    ui.next.addEventListener('click', () => {
+      const step = tour.steps[stepIndex];
+      // A step can do something first (open/close a panel). If onNext
+      // returns false, the step moves on by itself once that has happened.
+      if (step.onNext && step.onNext() === false) return;
+      goTo(stepIndex + 1);
+    });
 
     actions.append(ui.skip, ui.next);
     card.append(ui.label, ui.title, ui.text, actions);
